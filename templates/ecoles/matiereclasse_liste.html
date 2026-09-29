@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}Matières — {{ classe.nom }}{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center gap-2 mb-4 flex-wrap">
+    <a href="/ecole/matieres-classes/" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <div class="flex-grow-1">
+        <h4 class="mb-0"><i class="bi bi-diagram-3-fill"></i> {{ classe.nom }}</h4>
+        <small class="text-muted">{{ etablissement.nom }} · {{ annee.libelle }} · {{ total }} matière{{ total|pluralize }}</small>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/ecole/matieres-classes/{{ classe.id }}/affecter-masse/" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-check2-square"></i> Affecter en masse
+        </a>
+        <a href="/ecole/matieres-classes/{{ classe.id }}/affecter/" class="btn btn-sm btn-primary">
+            <i class="bi bi-plus-circle"></i> Affecter une matière
+        </a>
+    </div>
+</div>
+
+{% if affectations %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width:60px;">Ordre</th>
+                            <th>Matière</th>
+                            <th>Code</th>
+                            <th class="text-center">Coef. classe</th>
+                            <th>Enseignant</th>
+                            <th class="text-center">Notes</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for aff in affectations %}
+                        <tr>
+                            <td><span class="badge bg-secondary">{{ aff.matiere.ordre }}</span></td>
+                            <td><strong>{{ aff.matiere.nom }}</strong></td>
+                            <td><code>{{ aff.matiere.code }}</code></td>
+                            <td class="text-center">
+                                <span class="badge bg-primary">{{ aff.coefficient }}</span>
+                            </td>
+                            <td>
+                                {% if aff.enseignant %}
+                                    <i class="bi bi-person-circle text-success"></i>
+                                    {{ aff.enseignant.user.get_full_name }}
+                                {% else %}
+                                    <span class="text-muted small">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if aff.nb_notes > 0 %}
+                                    <span class="badge bg-success">{{ aff.nb_notes }}</span>
+                                {% else %}
+                                    <span class="text-muted small">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="/ecole/matieres-classes/affectation/{{ aff.id }}/modifier/"
+                                       class="btn btn-outline-secondary" title="Modifier">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    {% if aff.peut_supprimer %}
+                                        <a href="/ecole/matieres-classes/affectation/{{ aff.id }}/supprimer/"
+                                           class="btn btn-outline-danger" title="Retirer">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    {% else %}
+                                        <a href="#" class="btn btn-outline-danger"
+                                           onclick="alert('🚫 Impossible de retirer « {{ aff.matiere.nom }} ».\n\nDes notes ont été saisies pour cette matière dans cette classe.'); return false;">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-inbox" style="font-size:3rem;color:#cbd5e1;"></i>
+            <h5 class="mt-3 text-muted">Aucune matière affectée</h5>
+            <p class="text-muted">Affectez les matières que cette classe étudie.</p>
+            <div class="d-flex gap-2 justify-content-center">
+                <a href="/ecole/matieres-classes/{{ classe.id }}/affecter/" class="btn btn-primary">
+                    <i class="bi bi-plus-circle"></i> Affecter une matière
+                </a>
+                <a href="/ecole/matieres-classes/{{ classe.id }}/affecter-masse/" class="btn btn-outline-primary">
+                    <i class="bi bi-check2-square"></i> Affecter en masse
+                </a>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}

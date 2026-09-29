@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block title %}Présences — {{ etablissement.nom }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h4 class="mb-0"><i class="bi bi-calendar-check-fill text-primary"></i> Présences</h4>
+        <small class="text-muted">{{ etablissement.nom }} · {{ annee.libelle }}</small>
+    </div>
+    <a href="{% url 'ecoles:presence_recherche_eleve' %}" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-person-search"></i> Historique d'un élève
+    </a>
+</div>
+
+<div class="row g-3 mb-4">
+    {% for st in stats_today %}
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <h5 class="mb-0">{{ st.classe.nom }}</h5>
+                        <small class="text-muted">{{ st.classe.get_niveau_display }}</small>
+                    </div>
+                    {% if st.saisi %}
+                        <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">
+                            <i class="bi bi-check-circle-fill"></i> Saisi
+                        </span>
+                    {% else %}
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+                            <i class="bi bi-hourglass-split"></i> À saisir
+                        </span>
+                    {% endif %}
+                </div>
+
+                {% if st.saisi %}
+                <div class="d-flex gap-2 mb-2 small">
+                    <span class="text-success">✓ {{ st.present }}</span>
+                    <span class="text-danger">✗ {{ st.absent }}</span>
+                    <span class="text-warning">⏱ {{ st.retard }}</span>
+                    <span class="text-info">📝 {{ st.absent_justifie }}</span>
+                </div>
+                {% endif %}
+
+                <div class="d-flex gap-2">
+                    <a href="{% url 'ecoles:presence_saisie' %}?classe={{ st.classe.id }}&date={{ aujourdhui|date:'Y-m-d' }}"
+                       class="btn btn-primary btn-sm flex-grow-1">
+                        <i class="bi bi-pencil-square"></i> Saisir
+                    </a>
+                    <a href="{% url 'ecoles:presence_historique_classe' st.classe.id %}"
+                       class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-clock-history"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i>
+            Aucune classe ne vous est affectée.
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if stats_today %}
+<div class="alert alert-secondary small">
+    <i class="bi bi-lightbulb"></i>
+    <strong>Astuce :</strong> cliquez sur « <b>Saisir</b> » pour prendre les présences du jour (aujourd'hui, {{ aujourdhui|date:"d/m/Y" }}).
+    Le week-end passé, vous pouvez toujours corriger une date antérieure depuis la page de saisie.
+</div>
+{% endif %}
+{% endblock %}

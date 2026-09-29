@@ -1,0 +1,151 @@
+{% extends 'base.html' %}
+
+{% block title %}Saisie présences — {{ classe.nom }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <a href="{% url 'ecoles:presence_selection' %}" class="btn btn-sm btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h4 class="d-inline-block mb-0">
+            <i class="bi bi-calendar-check text-primary"></i>
+            Présences — {{ classe.nom }}
+        </h4>
+        <div class="small text-muted ms-5">
+            {{ etablissement.nom }} · {{ annee.libelle }}
+            {% if est_enseignant %}<span class="badge bg-warning text-dark ms-2">Mode Enseignant</span>{% endif %}
+        </div>
+    </div>
+</div>
+
+{# Barre de navigation date #}
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Classe</label>
+                <select name="classe" class="form-select form-select-sm" disabled>
+                    <option>{{ classe.nom }} ({{ classe.get_niveau_display }})</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Date</label>
+                <input type="date" name="date" value="{{ jour|date:'Y-m-d' }}" class="form-control form-control-sm"
+                       onchange="window.location.href='?classe={{ classe.id }}&date=' + this.value">
+            </div>
+            <div class="col-md-6 d-flex gap-2">
+                <a href="?classe={{ classe.id }}&date={{ jour_prec|date:'Y-m-d' }}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-chevron-left"></i> Jour précédent
+                </a>
+                <a href="?classe={{ classe.id }}&date={{ aujourdhui|date:'Y-m-d' }}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-calendar-event"></i> Aujourd'hui
+                </a>
+                <a href="?classe={{ classe.id }}&date={{ jour_suiv|date:'Y-m-d' }}" class="btn btn-sm btn-outline-secondary">
+                    Jour suivant <i class="bi bi-chevron-right"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if deja_saisi and stats %}
+<div class="alert alert-info d-flex gap-2 align-items-center">
+    <i class="bi bi-check-circle-fill"></i>
+    <div>
+        <strong>Présences déjà saisies pour cette date.</strong>
+        Total : {{ stats.total }} · Présents : <b>{{ stats.present }}</b> · Absents : <b>{{ stats.absent }}</b>
+        · Retards : <b>{{ stats.retard }}</b> · Justifiés : <b>{{ stats.absent_justifie }}</b>
+        <br><small>Modifiez ce que vous voulez puis ré-enregistrez.</small>
+    </div>
+</div>
+{% endif %}
+
+<form method="post" novalidate>
+    {% csrf_token %}
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-people-fill text-primary"></i>
+                Élèves — {{ jour|date:"d/m/Y" }} ({{ nb_eleves }})
+            </h5>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-sm btn-outline-success" onclick="setAll('present')">
+                    <i class="bi bi-check-all"></i> Tous présents
+                </button>
+            </div>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:50px;">#</th>
+                        <th>Nom & Prénom</th>
+                        <th style="width:320px;">Statut</th>
+                        <th style="width:220px;">Motif (si justifié)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ed in eleves_data %}
+                    <tr>
+                        <td class="text-muted">{{ forloop.counter }}</td>
+                        <td>
+                            <div class="fw-semibold">{{ ed.eleve.nom_complet }}</div>
+                            <div class="small text-muted">{{ ed.eleve.matricule }}</div>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm w-100" role="group">
+                                <input type="radio" class="btn-check" name="statut_{{ ed.eleve.id }}" id="pres_{{ ed.eleve.id }}" value="present"
+                                       {% if ed.statut == 'present' %}checked{% endif %}>
+                                <label class="btn btn-outline-success" for="pres_{{ ed.eleve.id }}">
+                                    <i class="bi bi-check-circle"></i> Présent
+                                </label>
+
+                                <input type="radio" class="btn-check" name="statut_{{ ed.eleve.id }}" id="abs_{{ ed.eleve.id }}" value="absent"
+                                       {% if ed.statut == 'absent' %}checked{% endif %}>
+                                <label class="btn btn-outline-danger" for="abs_{{ ed.eleve.id }}">
+                                    <i class="bi bi-x-circle"></i> Absent
+                                </label>
+
+                                <input type="radio" class="btn-check" name="statut_{{ ed.eleve.id }}" id="ret_{{ ed.eleve.id }}" value="retard"
+                                       {% if ed.statut == 'retard' %}checked{% endif %}>
+                                <label class="btn btn-outline-warning" for="ret_{{ ed.eleve.id }}">
+                                    <i class="bi bi-clock"></i> Retard
+                                </label>
+
+                                <input type="radio" class="btn-check" name="statut_{{ ed.eleve.id }}" id="just_{{ ed.eleve.id }}" value="absent_justifie"
+                                       {% if ed.statut == 'absent_justifie' %}checked{% endif %}>
+                                <label class="btn btn-outline-info" for="just_{{ ed.eleve.id }}">
+                                    <i class="bi bi-file-medical"></i> Justifié
+                                </label>
+                            </div>
+                        </td>
+                        <td>
+                            <input type="text" name="motif_{{ ed.eleve.id }}" value="{{ ed.motif }}" class="form-control form-control-sm" placeholder="Ex : certificat médical">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer bg-white d-flex justify-content-between align-items-center">
+            <small class="text-muted">Par défaut : Présent. Modifiez seulement les exceptions.</small>
+            <div class="d-flex gap-2">
+                <a href="{% url 'ecoles:presence_selection' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Annuler
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check2-circle"></i> Enregistrer les présences
+                </button>
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+function setAll(statut) {
+    document.querySelectorAll('input[type="radio"][value="' + statut + '"]').forEach(r => r.checked = true);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}Cartes scolaires — {{ etablissement.nom }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h4 class="mb-0">
+            <i class="bi bi-card-heading text-primary"></i>
+            Cartes scolaires
+        </h4>
+        <small class="text-muted">
+            {{ etablissement.nom }} — Année {{ annee.libelle }}
+        </small>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/dashboard/" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+{% if not config_complete %}
+<div class="alert alert-warning d-flex align-items-center">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    <div>
+        <strong>Configuration incomplète.</strong>
+        Renseignez le nom du chef et le cachet dans
+        <a href="/ecole/configuration/" class="alert-link">Configuration</a>
+        pour un rendu optimal.
+    </div>
+</div>
+{% endif %}
+
+{% if nb_sans_photo > 0 %}
+<div class="alert alert-info d-flex align-items-center">
+    <i class="bi bi-info-circle-fill me-2"></i>
+    <div>
+        <strong>{{ nb_sans_photo }}</strong> élève(s) sans photo.
+        La carte affichera un emplacement vide pour ces élèves.
+    </div>
+</div>
+{% endif %}
+
+<!-- Statistiques -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-4">
+        <div class="stat-card" style="border-left-color:#2563eb;">
+            <div class="icon" style="background:#dbeafe;color:#2563eb;">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <h3>{{ total_inscrits }}</h3>
+            <p>Élèves inscrits</p>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <div class="stat-card" style="border-left-color:#16a34a;">
+            <div class="icon" style="background:#dcfce7;color:#16a34a;">
+                <i class="bi bi-mortarboard-fill"></i>
+            </div>
+            <h3>{{ classes|length }}</h3>
+            <p>Classes</p>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="stat-card" style="border-left-color:#f59e0b;">
+            <div class="icon" style="background:#fef3c7;color:#f59e0b;">
+                <i class="bi bi-card-heading"></i>
+            </div>
+            <h3>{{ total_inscrits }}</h3>
+            <p>Cartes à imprimer</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Colonne gauche : par classe -->
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">
+                    <i class="bi bi-mortarboard-fill text-primary"></i>
+                    Générer par classe
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                {% if classes %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Classe</th>
+                                <th class="text-center">Effectif</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for classe in classes %}
+                            <tr>
+                                <td>
+                                    <strong>{{ classe.nom }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ classe.get_niveau_display }}</small>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary rounded-pill">
+                                        {{ classe.nb_inscrits }}
+                                    </span>
+                                </td>
+                                <td class="text-end">
+                                    {% if classe.nb_inscrits > 0 %}
+                                    <a href="{% url 'ecoles:carte_pdf_classe' classe.id %}"
+                                       class="btn btn-sm btn-primary">
+                                        <i class="bi bi-file-earmark-pdf"></i>
+                                        Générer PDF
+                                    </a>
+                                    {% else %}
+                                    <span class="text-muted small">Aucun élève</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="p-4 text-center text-muted">
+                    <i class="bi bi-inbox" style="font-size:2.5rem;"></i>
+                    <p class="mt-2 mb-0">Aucune classe pour cette année.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Colonne droite : recherche élève -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h6 class="mb-0">
+                    <i class="bi bi-person-badge text-success"></i>
+                    Générer pour un élève
+                </h6>
+            </div>
+            <div class="card-body">
+                <form method="get" class="mb-3">
+                    <div class="input-group">
+                        <input type="text" name="q" value="{{ recherche }}"
+                               class="form-control"
+                               placeholder="Nom, prénom ou matricule…">
+                        <button class="btn btn-success" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </form>
+
+                {% if recherche %}
+                    {% if eleves_recherche %}
+                    <div class="list-group list-group-flush" style="max-height:420px;overflow-y:auto;">
+                        {% for eleve in eleves_recherche %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>{{ eleve.nom_complet }}</strong>
+                                <br>
+                                <small class="text-muted">
+                                    Mat. {{ eleve.matricule }}
+                                    {% if not eleve.a_photo %}
+                                    · <span class="text-warning">sans photo</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <a href="{% url 'ecoles:carte_pdf_eleve' eleve.id %}"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-download"></i>
+                            </a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center text-muted py-3">
+                        <i class="bi bi-search" style="font-size:2rem;"></i>
+                        <p class="mt-2 mb-0 small">Aucun élève trouvé.</p>
+                    </div>
+                    {% endif %}
+                {% else %}
+                <div class="text-center text-muted py-3">
+                    <i class="bi bi-search" style="font-size:2rem;"></i>
+                    <p class="mt-2 mb-0 small">
+                        Saisissez un nom ou un matricule pour rechercher.
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Info format -->
+        <div class="card mt-3 border-0 bg-light">
+            <div class="card-body small text-muted">
+                <i class="bi bi-info-circle"></i>
+                <strong>Format :</strong> 10 cartes par page A4 (2 colonnes × 5 lignes).
+                Chaque carte mesure 85,6 × 54 mm (format CR80).
+                Des traits de coupe sont imprimés aux coins.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

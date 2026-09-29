@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}Historique élève — Discipline{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <a href="{% url 'ecoles:discipline_menu' %}" class="btn btn-sm btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h4 class="d-inline-block mb-0"><i class="bi bi-person-search text-primary"></i> Historique disciplinaire d'un élève</h4>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-10">
+                <label class="form-label small fw-semibold">Rechercher un élève</label>
+                <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Nom, prénom ou matricule...">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i> Rechercher</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if q %}
+    {% if eleves %}
+        <div class="card border-0 shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Matricule</th>
+                            <th>Nom & prénom</th>
+                            <th class="text-center">Incidents</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in eleves %}
+                        <tr>
+                            <td>{{ e.matricule }}</td>
+                            <td class="fw-semibold">{{ e.nom_complet }}</td>
+                            <td class="text-center">
+                                {% if e.nb_incidents_aff > 0 %}
+                                    <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle">{{ e.nb_incidents_aff }}</span>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <a href="{% url 'ecoles:eleve_historique' e.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-clock-history"></i> Historique
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-warning">
+            <i class="bi bi-info-circle"></i> Aucun élève trouvé pour « {{ q }} ».
+        </div>
+    {% endif %}
+{% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> Tape un nom, un prénom ou un matricule pour rechercher un élève.
+    </div>
+{% endif %}
+{% endblock %}

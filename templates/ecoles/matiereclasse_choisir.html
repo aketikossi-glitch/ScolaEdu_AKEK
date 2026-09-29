@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Matières par classe — {{ annee.libelle }}{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h4 class="mb-0"><i class="bi bi-diagram-3-fill"></i> Matières par classe</h4>
+        <small class="text-muted">{{ etablissement.nom }} · {{ annee.libelle }}</small>
+    </div>
+</div>
+
+<div class="alert alert-info d-flex gap-2 small">
+    <i class="bi bi-info-circle-fill"></i>
+    <div>
+        <strong>À quoi ça sert ?</strong> Affecter une matière à une classe permet ensuite de saisir les notes
+        et de générer les bulletins. Choisissez une classe ci-dessous.
+    </div>
+</div>
+
+<div class="row g-3">
+    {% for classe in classes %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <h5 class="mb-0">{{ classe.nom }}</h5>
+                    <span class="badge bg-primary">{{ classe.nb_matieres_affectees }} / {{ total_matieres }}</span>
+                </div>
+                <p class="text-muted small mb-3">
+                    Niveau : {{ classe.get_niveau_display }}<br>
+                    Élèves inscrits : {{ classe.inscriptions.count }}
+                </p>
+                <a href="/ecole/matieres-classes/{{ classe.id }}/" class="btn btn-primary w-100">
+                    <i class="bi bi-arrow-right-circle"></i> Gérer ses matières
+                </a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-inbox" style="font-size:3rem;color:#cbd5e1;"></i>
+                <h5 class="mt-3 text-muted">Aucune classe créée</h5>
+                <a href="/ecole/classes/creer/" class="btn btn-primary btn-sm mt-2">
+                    Créer une classe
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

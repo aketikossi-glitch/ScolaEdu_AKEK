@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titre }} — ScolaEdu_AKEK{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+
+        <div class="card border-0 shadow-sm border-top border-danger border-3">
+            <div class="card-body p-4">
+
+                <div class="text-center mb-4">
+                    <div style="font-size:3rem;">🗑️</div>
+                    <h4 class="mt-2 text-danger">Supprimer cet utilisateur ?</h4>
+                </div>
+
+                <div class="alert alert-danger">
+                    <strong>Action IRRÉVERSIBLE.</strong> Vous allez supprimer :
+                    <ul class="mb-0 mt-2">
+                        <li>L'utilisateur <strong>{{ profil.user.get_full_name|default:profil.user.username }}</strong></li>
+                        <li>Son compte de connexion (<code>{{ profil.user.username }}</code>)</li>
+                        <li>Son profil ({{ profil.get_role_display }})</li>
+                    </ul>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <a href="/principal/etablissements/{{ etablissement.id }}/" class="btn btn-outline-secondary flex-grow-1">
+                            Annuler
+                        </a>
+                        <button type="submit" class="btn btn-danger flex-grow-1">
+                            <i class="bi bi-trash"></i> Supprimer
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

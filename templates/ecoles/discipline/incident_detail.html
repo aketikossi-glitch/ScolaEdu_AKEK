@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Incident — {{ incident.eleve.nom_complet }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <a href="{% url 'ecoles:incident_liste' %}" class="btn btn-sm btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h4 class="d-inline-block mb-0">
+            <i class="bi bi-exclamation-triangle-fill text-danger"></i>
+            Incident du {{ incident.date_incident|date:"d/m/Y" }}
+        </h4>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'ecoles:incident_modifier' incident.id %}" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-pencil"></i> Modifier
+        </a>
+        {% if peut_sanctionner %}
+            <a href="{% url 'ecoles:incident_supprimer' incident.id %}" class="btn btn-outline-danger btn-sm">
+                <i class="bi bi-trash"></i> Supprimer
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-7">
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="bi bi-info-circle text-primary"></i> Informations</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Élève</dt>
+                    <dd class="col-sm-8">
+                        <a href="{% url 'ecoles:eleve_historique' incident.eleve.id %}" class="fw-bold text-decoration-none">
+                            {{ incident.eleve.nom_complet }}
+                        </a>
+                        <div class="small text-muted">{{ incident.eleve.matricule }}</div>
+                    </dd>
+
+                    <dt class="col-sm-4">Date / heure</dt>
+                    <dd class="col-sm-8">
+                        {{ incident.date_incident|date:"d/m/Y" }}
+                        {% if incident.heure_incident %} à {{ incident.heure_incident|time:"H:i" }}{% endif %}
+                    </dd>
+
+                    <dt class="col-sm-4">Type</dt>
+                    <dd class="col-sm-8">{{ incident.get_type_incident_display }}</dd>
+
+                    <dt class="col-sm-4">Gravité</dt>
+                    <dd class="col-sm-8">
+                        {% if incident.gravite == 'grave' %}
+                            <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle">Grave</span>
+                        {% elif incident.gravite == 'moyen' %}
+                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Moyen</span>
+                        {% else %}
+                            <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Léger</span>
+                        {% endif %}
+                    </dd>
+
+                    <dt class="col-sm-4">Statut</dt>
+                    <dd class="col-sm-8">{{ incident.get_statut_display }}</dd>
+
+                    <dt class="col-sm-4">Signalé par</dt>
+                    <dd class="col-sm-8">{{ incident.signale_par.get_full_name|default:incident.signale_par.username|default:"—" }}</dd>
+
+                    <dt class="col-sm-4">Date signalement</dt>
+                    <dd class="col-sm-8">{{ incident.date_signalement|date:"d/m/Y H:i" }}</dd>
+
+                    {% if incident.description %}
+                    <dt class="col-sm-4">Description</dt>
+                    <dd class="col-sm-8">{{ incident.description|linebreaksbr }}</dd>
+                    {% endif %}
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-gavel text-secondary"></i> Sanctions ({{ sanctions|length }})</h5>
+                {% if peut_sanctionner %}
+                    <a href="{% url 'ecoles:sanction_creer' incident.id %}" class="btn btn-sm btn-primary">
+                        <i class="bi bi-plus-circle"></i> Ajouter
+                    </a>
+                {% endif %}
+            </div>
+            <div class="card-body p-0">
+                {% if sanctions %}
+                    <ul class="list-group list-group-flush">
+                        {% for s in sanctions %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="fw-semibold">{{ s.get_type_sanction_display }}</div>
+                                    <div class="small text-muted">
+                                        Du {{ s.date_debut|date:"d/m/Y" }}
+                                        {% if s.date_fin %} au {{ s.date_fin|date:"d/m/Y" }}{% endif %}
+                                    </div>
+                                    {% if s.description %}
+                                        <div class="small">{{ s.description }}</div>
+                                    {% endif %}
+                                    <div class="small text-muted mt-1">
+                                        Décidée par {{ s.decidee_par.get_full_name|default:s.decidee_par.username|default:"—" }}
+                                    </div>
+                                </div>
+                                {% if peut_sanctionner %}
+                                    <a href="{% url 'ecoles:sanction_supprimer' s.id %}" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="p-4 text-center text-muted">
+                        <i class="bi bi-info-circle fs-3"></i>
+                        <p class="mb-0 mt-2 small">Aucune sanction décidée.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

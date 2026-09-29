@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titre }} — ScolaEdu_AKEK{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white pt-3 pb-3 border-bottom">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-calendar-plus text-primary" style="font-size:1.5rem;"></i>
+                    <h5 class="mb-0">{{ titre }}</h5>
+                </div>
+                <small class="text-muted">
+                    Établissement : <strong>{{ etablissement.nom }}</strong> ({{ etablissement.code }})
+                </small>
+            </div>
+
+            <div class="card-body p-4">
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            {{ form.libelle.label }} <span class="text-danger">*</span>
+                        </label>
+                        {{ form.libelle }}
+                        {% if form.libelle.errors %}
+                            <div class="text-danger small mt-1">{{ form.libelle.errors.0 }}</div>
+                        {% endif %}
+                        <small class="text-muted">Format : AAAA-AAAA (ex: 2025-2026)</small>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">
+                                {{ form.date_debut.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.date_debut }}
+                            {% if form.date_debut.errors %}
+                                <div class="text-danger small mt-1">{{ form.date_debut.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">
+                                {{ form.date_fin.label }} <span class="text-danger">*</span>
+                            </label>
+                            {{ form.date_fin }}
+                            {% if form.date_fin.errors %}
+                                <div class="text-danger small mt-1">{{ form.date_fin.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="form-check mb-4">
+                        {{ form.en_cours }}
+                        <label class="form-check-label" for="{{ form.en_cours.id_for_label }}">
+                            {{ form.en_cours.label }}
+                        </label>
+                        <div class="text-muted small">
+                            Si activé, cette année deviendra l'année courante de l'établissement.
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/dashboard/" class="btn btn-outline-secondary flex-grow-1">
+                            <i class="bi bi-arrow-left"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-primary flex-grow-1">
+                            <i class="bi bi-check2-circle"></i> Créer l'année
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Incidents — {{ etablissement.nom }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <a href="{% url 'ecoles:discipline_menu' %}" class="btn btn-sm btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h4 class="d-inline-block mb-0"><i class="bi bi-list-ul text-primary"></i> Incidents disciplinaires</h4>
+        <div class="small text-muted ms-5">{{ etablissement.nom }} · {{ total }} incident(s)</div>
+    </div>
+    <a href="{% url 'ecoles:incident_creer' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Signaler un incident
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Recherche élève</label>
+                <input type="text" name="q" value="{{ f_recherche }}" class="form-control" placeholder="Nom, prénom ou matricule...">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Statut</label>
+                <select name="statut" class="form-select">
+                    <option value="">— Tous —</option>
+                    {% for code, lib in statuts %}
+                        <option value="{{ code }}" {% if f_statut == code %}selected{% endif %}>{{ lib }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Gravité</label>
+                <select name="gravite" class="form-select">
+                    <option value="">— Toutes —</option>
+                    {% for code, lib in gravites %}
+                        <option value="{{ code }}" {% if f_gravite == code %}selected{% endif %}>{{ lib }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Type</label>
+                <select name="type" class="form-select">
+                    <option value="">— Tous —</option>
+                    {% for code, lib in types_incident %}
+                        <option value="{{ code }}" {% if f_type == code %}selected{% endif %}>{{ lib }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-1">
+                <button type="submit" class="btn btn-primary w-100"><i class="bi bi-search"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if incidents %}
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Date</th>
+                    <th>Élève</th>
+                    <th>Type</th>
+                    <th>Gravité</th>
+                    <th>Statut</th>
+                    <th>Signalé par</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for inc in incidents %}
+                <tr>
+                    <td>{{ inc.date_incident|date:"d/m/Y" }}</td>
+                    <td>
+                        <a href="{% url 'ecoles:incident_detail' inc.id %}" class="fw-semibold text-decoration-none">
+                            {{ inc.eleve.nom_complet }}
+                        </a>
+                        <div class="small text-muted">{{ inc.eleve.matricule }}</div>
+                    </td>
+                    <td>{{ inc.get_type_incident_display }}</td>
+                    <td>
+                        {% if inc.gravite == 'grave' %}
+                            <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle">Grave</span>
+                        {% elif inc.gravite == 'moyen' %}
+                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Moyen</span>
+                        {% else %}
+                            <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Léger</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if inc.statut == 'signale' %}
+                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Signalé</span>
+                        {% elif inc.statut == 'traite' %}
+                            <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Traité</span>
+                        {% else %}
+                            <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">Classé</span>
+                        {% endif %}
+                    </td>
+                    <td class="small">{{ inc.signale_par.get_full_name|default:inc.signale_par.username|default:"—" }}</td>
+                    <td class="text-end">
+                        <a href="{% url 'ecoles:incident_detail' inc.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> Aucun incident trouvé.
+</div>
+{% endif %}
+
+{% endblock %}

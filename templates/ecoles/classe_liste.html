@@ -1,0 +1,138 @@
+{% extends 'base.html' %}
+
+{% block title %}Classes — {{ annee.libelle }}{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h4 class="mb-0"><i class="bi bi-mortarboard-fill"></i> Classes — {{ annee.libelle }}</h4>
+        <small class="text-muted">
+            {{ etablissement.nom }} · {{ total_classes }} classe{{ total_classes|pluralize }}
+        </small>
+    </div>
+    <a href="/ecole/classes/creer/" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Nouvelle classe
+    </a>
+</div>
+
+{% if classes_par_niveau %}
+    {% for niveau, classes in classes_par_niveau.items %}
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white pt-3 pb-2 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                <i class="bi bi-bookmark-fill text-primary"></i>
+                {{ niveau }}
+                <span class="badge bg-secondary ms-2">{{ classes|length }}</span>
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nom de la classe</th>
+                            <th class="text-center">Élèves</th>
+                            <th class="text-center">Matières</th>
+                            <th class="text-center">Capacité</th>
+                            <th>Taux</th>
+                            <th class="text-center">Titulaire</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for classe in classes %}
+                        <tr>
+                            <td>
+                                <strong>{{ classe.nom }}</strong>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-info">{{ classe.nb_inscrits }}</span>
+                            </td>
+                            <td class="text-center">
+                                {% if classe.nb_matieres > 0 %}
+                                    <span class="badge bg-primary">{{ classe.nb_matieres }}</span>
+                                {% else %}
+                                    <span class="text-muted small">—</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <span class="text-muted">{{ classe.effectif_max }}</span>
+                            </td>
+                            <td style="min-width:100px;">
+                                {% widthratio classe.nb_inscrits classe.effectif_max 100 as pourcentage %}
+                                <div class="progress" style="height:8px;">
+                                    <div class="progress-bar
+                                        {% if classe.nb_inscrits >= classe.effectif_max %}bg-danger
+                                        {% elif pourcentage >= 80 %}bg-warning
+                                        {% else %}bg-success{% endif %}"
+                                         style="width: {{ pourcentage }}%;"></div>
+                                </div>
+                                <small class="text-muted">{{ pourcentage }}%</small>
+                            </td>
+                            <td class="text-center">
+                                <!-- ✅ NOUVEAU : Bouton Titulaire -->
+                                {% if classe.titulaire %}
+                                    <a href="/ecole/classes/{{ classe.id }}/titulaire/"
+                                       class="badge bg-success text-decoration-none"
+                                       title="Changer le titulaire">
+                                        <i class="bi bi-person-badge-fill"></i>
+                                        {{ classe.titulaire.user.first_name|default:classe.titulaire.user.username }}
+                                    </a>
+                                {% else %}
+                                    <a href="/ecole/classes/{{ classe.id }}/titulaire/"
+                                       class="badge bg-warning text-dark text-decoration-none"
+                                       title="Affecter un professeur titulaire">
+                                        <i class="bi bi-person-plus"></i> Affecter
+                                    </a>
+                                {% endif %}
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <a href="/ecole/classes/{{ classe.id }}/titulaire/"
+                                       class="btn btn-outline-info"
+                                       title="Affecter un titulaire">
+                                        <i class="bi bi-person-badge"></i>
+                                    </a>
+                                    <a href="/ecole/classes/{{ classe.id }}/modifier/"
+                                       class="btn btn-outline-secondary" title="Modifier">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+
+                                    {% if classe.peut_supprimer %}
+                                        <a href="/ecole/classes/{{ classe.id }}/supprimer/"
+                                           class="btn btn-outline-danger" title="Supprimer">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    {% else %}
+                                        <a href="#"
+                                           class="btn btn-outline-danger"
+                                           title="Impossible : {{ classe.raison_blocage }}"
+                                           onclick="alert('🚫 Impossible de supprimer la classe « {{ classe.nom }} ».\n\nRaison : {{ classe.raison_blocage }}.\n\n💡 Supprimez d\'abord ces données.'); return false;">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-inbox" style="font-size:3rem;color:#cbd5e1;"></i>
+            <h5 class="mt-3 text-muted">Aucune classe créée</h5>
+            <p class="text-muted">Commencez par créer votre première classe pour l'année {{ annee.libelle }}.</p>
+            <a href="/ecole/classes/creer/" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Créer la première classe
+            </a>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Historique présences — {{ classe.nom }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <a href="{% url 'ecoles:presence_selection' %}" class="btn btn-sm btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h4 class="d-inline-block mb-0">
+            <i class="bi bi-clock-history text-primary"></i>
+            Historique — {{ classe.nom }}
+        </h4>
+        <div class="small text-muted ms-5">{{ etablissement.nom }} · {{ annee.libelle }} · {{ nb_jours }} jour(s) saisi(s)</div>
+    </div>
+    <a href="{% url 'ecoles:presence_saisie' %}?classe={{ classe.id }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-pencil-square"></i> Saisir aujourd'hui
+    </a>
+</div>
+
+{% if jours_data %}
+<div class="card border-0 shadow-sm">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Date</th>
+                    <th class="text-center text-success">Présents</th>
+                    <th class="text-center text-danger">Absents</th>
+                    <th class="text-center text-warning">Retards</th>
+                    <th class="text-center text-info">Justifiés</th>
+                    <th class="text-center">Total</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for j in jours_data %}
+                <tr>
+                    <td class="fw-semibold">{{ j.date|date:"d/m/Y" }}</td>
+                    <td class="text-center"><span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">{{ j.present }}</span></td>
+                    <td class="text-center"><span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle">{{ j.absent }}</span></td>
+                    <td class="text-center"><span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">{{ j.retard }}</span></td>
+                    <td class="text-center"><span class="badge bg-info-subtle text-info-emphasis border border-info-subtle">{{ j.absent_justifie }}</span></td>
+                    <td class="text-center text-muted">{{ j.total }}</td>
+                    <td class="text-end">
+                        <a href="{% url 'ecoles:presence_saisie' %}?classe={{ classe.id }}&date={{ j.date|date:'Y-m-d' }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-pencil"></i> Modifier
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle"></i> Aucune présence saisie pour cette classe.
+</div>
+{% endif %}
+{% endblock %}

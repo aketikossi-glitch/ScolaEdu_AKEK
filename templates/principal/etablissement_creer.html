@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block title %}Nouvel établissement{% endblock %}
+
+{% block content %}
+
+<div class="container py-4" style="max-width: 900px;">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0"><i class="bi bi-building-add"></i> Nouvel établissement</h4>
+        <a href="/principal/etablissements/" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        <!-- ===== INFORMATIONS ÉTABLISSEMENT ===== -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-primary text-white">
+                <i class="bi bi-building"></i> Informations de l'établissement
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8 mb-3">
+                        <label class="form-label fw-semibold">{{ form.nom.label }} *</label>
+                        {{ form.nom }}
+                        {% if form.nom.errors %}<small class="text-danger">{{ form.nom.errors.0 }}</small>{% endif %}
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label fw-semibold">{{ form.code.label }} *</label>
+                        {{ form.code }}
+                        {% if form.code.errors %}<small class="text-danger">{{ form.code.errors.0 }}</small>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">{{ form.type_etablissement.label }}</label>
+                        {{ form.type_etablissement }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">{{ form.ville.label }}</label>
+                        {{ form.ville }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">{{ form.adresse.label }}</label>
+                        {{ form.adresse }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">{{ form.telephone.label }}</label>
+                        {{ form.telephone }}
+                    </div>
+                    <!-- ✅ NOUVEAU : champ BP -->
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">{{ form.bp.label }}</label>
+                        {{ form.bp }}
+                        <small class="text-muted">Boîte postale (optionnel)</small>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">{{ form.email.label }}</label>
+                        {{ form.email }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">{{ form.numero_agrement.label }}</label>
+                        {{ form.numero_agrement }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ===== CHEF D'ÉTABLISSEMENT ===== -->
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-header bg-warning">
+                <i class="bi bi-person-badge"></i> Compte du chef d'établissement
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">{{ form.chef_username.label }} *</label>
+                        {{ form.chef_username }}
+                        {% if form.chef_username.errors %}<small class="text-danger">{{ form.chef_username.errors.0 }}</small>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">{{ form.chef_email.label }} *</label>
+                        {{ form.chef_email }}
+                        {% if form.chef_email.errors %}<small class="text-danger">{{ form.chef_email.errors.0 }}</small>{% endif %}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">{{ form.chef_first_name.label }}</label>
+                        {{ form.chef_first_name }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">{{ form.chef_last_name.label }}</label>
+                        {{ form.chef_last_name }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">{{ form.chef_telephone.label }}</label>
+                        {{ form.chef_telephone }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label fw-semibold">{{ form.chef_password.label }}</label>
+                        {{ form.chef_password }}
+                        <small class="text-muted">{{ form.chef_password.help_text }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mb-5">
+            <a href="/principal/etablissements/" class="btn btn-outline-secondary">
+                <i class="bi bi-x-circle"></i> Annuler
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check2-circle"></i> Créer l'établissement
+            </button>
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Présences — {{ eleve.nom_complet }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <a href="{% url 'ecoles:presence_recherche_eleve' %}" class="btn btn-sm btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h4 class="d-inline-block mb-0">
+            <i class="bi bi-person-badge text-primary"></i>
+            Présences — {{ eleve.nom_complet }}
+        </h4>
+        <div class="small text-muted ms-5">
+            Matricule {{ eleve.matricule }}
+            {% if inscription %} · Classe {{ inscription.classe.nom }}{% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="icon bg-primary-subtle text-primary"><i class="bi bi-calendar-check-fill"></i></div>
+            <h3>{{ stats.total }}</h3>
+            <p>Jours enregistrés</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="icon bg-success-subtle text-success"><i class="bi bi-check-circle-fill"></i></div>
+            <h3>{{ stats.present }}</h3>
+            <p>Présences</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="icon bg-danger-subtle text-danger"><i class="bi bi-x-circle-fill"></i></div>
+            <h3>{{ stats.absent }}</h3>
+            <p>Absences</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="icon bg-warning-subtle text-warning"><i class="bi bi-percent"></i></div>
+            <h3>{% if stats.taux_presence is not None %}{{ stats.taux_presence }}%{% else %}—{% endif %}</h3>
+            <p>Taux de présence</p>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom">
+        <h5 class="mb-0"><i class="bi bi-list-ul text-primary"></i> Détail des derniers jours</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Date</th>
+                    <th>Statut</th>
+                    <th>Motif</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in presences %}
+                <tr>
+                    <td>{{ p.date|date:"d/m/Y" }} <small class="text-muted">{{ p.date|date:"l" }}</small></td>
+                    <td>
+                        {% if p.statut == 'present' %}
+                            <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle"><i class="bi bi-check-circle"></i> Présent</span>
+                        {% elif p.statut == 'absent' %}
+                            <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle"><i class="bi bi-x-circle"></i> Absent</span>
+                        {% elif p.statut == 'retard' %}
+                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle"><i class="bi bi-clock"></i> Retard</span>
+                        {% else %}
+                            <span class="badge bg-info-subtle text-info-emphasis border border-info-subtle"><i class="bi bi-file-medical"></i> Justifié</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted small">{{ p.motif|default:"—" }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="3" class="text-center text-muted py-4">Aucune présence enregistrée.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

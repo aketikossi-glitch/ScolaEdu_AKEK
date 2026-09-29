@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titre }} — ScolaEdu_AKEK{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h4 class="mb-0">👋 {{ titre }}</h4>
+        <small class="text-muted">
+            {{ etablissement.nom }}
+            {% if annee %} · Année {{ annee.libelle }}{% endif %}
+            {% if trimestre_courant %} · {{ trimestre_courant.get_numero_display }}{% endif %}
+        </small>
+    </div>
+</div>
+
+{% if not annee %}
+<div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle"></i>
+    Aucune année scolaire active. Contactez le chef d'établissement.
+</div>
+{% elif not trimestre_courant %}
+<div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle"></i>
+    Aucun trimestre en cours. Contactez le chef d'établissement.
+</div>
+{% endif %}
+
+<!-- Statistiques -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-4">
+        <div class="stat-card" style="border-left-color:#2563eb;">
+            <div class="icon" style="background:#dbeafe;color:#2563eb;"><i class="bi bi-mortarboard-fill"></i></div>
+            <h3>{{ nb_affectations }}</h3>
+            <p>Classes/matières affectées</p>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <div class="stat-card" style="border-left-color:#16a34a;">
+            <div class="icon" style="background:#dcfce7;color:#16a34a;"><i class="bi bi-person-badge-fill"></i></div>
+            <h3 style="font-size:1.1rem;">{{ enseignant.specialite|default:"—" }}</h3>
+            <p>Ma spécialité</p>
+        </div>
+    </div>
+    <div class="col-6 col-md-4">
+        <div class="stat-card" style="border-left-color:#f59e0b;">
+            <div class="icon" style="background:#fef3c7;color:#f59e0b;"><i class="bi bi-pencil-square"></i></div>
+            <h3><a href="/ecole/notes/" class="text-decoration-none">Saisir</a></h3>
+            <p>Accès rapide aux notes</p>
+        </div>
+    </div>
+</div>
+
+<!-- Mes affectations -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-0 pt-3 pb-2">
+        <h5 class="mb-0"><i class="bi bi-list-check"></i> Mes classes et matières</h5>
+        <small class="text-muted">
+            {% if trimestre_courant %}
+                Nombre de notes saisies au {{ trimestre_courant.get_numero_display }}.
+            {% endif %}
+        </small>
+    </div>
+    <div class="card-body p-0">
+        {% if mes_affectations %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Classe</th>
+                        <th>Matière</th>
+                        <th class="text-center">Coefficient</th>
+                        <th class="text-center">Élèves</th>
+                        <th class="text-center">Notes saisies</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in mes_affectations %}
+                    <tr>
+                        <td><strong>{{ item.affectation.classe.nom }}</strong></td>
+                        <td>{{ item.affectation.matiere.nom }}</td>
+                        <td class="text-center">
+                            <span class="badge bg-primary">{{ item.affectation.coefficient }}</span>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-info">{{ item.nb_eleves }}</span>
+                        </td>
+                        <td class="text-center">
+                            {% if item.statut == 'vide' %}
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-dash-circle"></i> Aucune
+                                </span>
+                            {% elif item.statut == 'partiel' %}
+                                <span class="badge bg-warning text-dark">
+                                    <i class="bi bi-hourglass-split"></i> {{ item.statut_label }}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> {{ item.statut_label }}
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            {% if trimestre_courant %}
+                                <a href="/ecole/notes/saisie/?classe={{ item.affectation.classe.id }}&matiere={{ item.affectation.matiere.id }}&trimestre={{ trimestre_courant.id }}"
+                                   class="btn btn-sm {% if item.statut == 'vide' %}btn-outline-primary{% else %}btn-outline-success{% endif %}">
+                                    {% if item.statut == 'vide' %}
+                                        <i class="bi bi-pencil"></i> Saisir
+                                    {% else %}
+                                        <i class="bi bi-pencil-square"></i> Modifier
+                                    {% endif %}
+                                </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox" style="font-size:3rem;color:#cbd5e1;"></i>
+            <p class="text-muted mt-3 mb-0">
+                Aucune classe/matière ne vous est affectée pour le moment.<br>
+                Contactez le chef d'établissement.
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Actions rapides -->
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h6 class="mb-3"><i class="bi bi-pencil-square text-primary"></i> Saisie des notes</h6>
+                <p class="text-muted small">Saisir les notes de devoirs et compositions pour mes classes.</p>
+                <a href="/ecole/notes/" class="btn btn-primary w-100">
+                    <i class="bi bi-pencil"></i> Aller à la saisie
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <h6 class="mb-3"><i class="bi bi-clipboard-check text-success"></i> Vérification des notes</h6>
+                <p class="text-muted small">Voir le récapitulatif des notes de mes classes.</p>
+                <a href="/ecole/notes/verification/" class="btn btn-success w-100">
+                    <i class="bi bi-clipboard-check"></i> Voir la vérification
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

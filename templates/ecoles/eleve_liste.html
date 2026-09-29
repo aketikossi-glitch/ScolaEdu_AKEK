@@ -1,0 +1,434 @@
+{% extends 'base.html' %}
+
+{% block title %}Élèves — {{ annee.libelle }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .table-excel-container {
+        background: white;
+        border: 2px solid #1e3a8a;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .table-excel-header {
+        background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%);
+        color: white;
+        padding: 10px 15px;
+        font-weight: 700;
+        font-size: 0.92rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .table-excel-scroll {
+        overflow: auto;
+        max-height: 65vh;
+        position: relative;
+    }
+    .table-excel {
+        width: 100%;
+        min-width: 1900px;
+        border-collapse: collapse;
+        font-size: 0.78rem;
+        margin: 0;
+        background: white;
+    }
+    .table-excel thead th {
+        background: #1e40af;
+        color: white;
+        padding: 8px 10px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        border-right: 1px solid #3b82f6;
+        border-bottom: 2px solid #1e3a8a;
+        white-space: nowrap;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        height: 36px;
+        vertical-align: middle;
+    }
+    .table-excel thead th:last-child { border-right: none; }
+
+    .table-excel thead th.col-num,
+    .table-excel tbody td.col-num {
+        position: sticky;
+        left: 0;
+        z-index: 11;
+        width: 42px;
+        min-width: 42px;
+        text-align: center;
+        font-weight: 700;
+    }
+    .table-excel thead th.col-num {
+        background: #1e40af;
+        color: white;
+        border-right: 2px solid #0f172a;
+    }
+    .table-excel tbody td.col-num {
+        background: #e0e7ff;
+        color: #1e40af;
+        border-right: 2px solid #94a3b8;
+        z-index: 6;
+    }
+
+    .table-excel tbody td {
+        padding: 4px 10px;
+        border-right: 1px solid #cbd5e1;
+        border-bottom: 1px solid #cbd5e1;
+        vertical-align: middle;
+        white-space: nowrap;
+        height: 32px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 200px;
+    }
+    .table-excel tbody td:last-child { border-right: none; }
+    .table-excel tbody tr:nth-child(odd) { background: white; }
+    .table-excel tbody tr:nth-child(even) { background: #f8fafc; }
+    .table-excel tbody tr:hover { background: #dbeafe !important; }
+    .table-excel tbody tr:hover td.col-num { background: #c7d2fe !important; }
+
+    .photo-mini {
+        width: 24px; height: 30px;
+        object-fit: cover; border-radius: 3px;
+        border: 1px solid #94a3b8; background: white; display: block;
+    }
+    .photo-mini-placeholder {
+        width: 24px; height: 30px; border-radius: 3px;
+        border: 1px dashed #cbd5e1; background: #f1f5f9;
+        display: flex; align-items: center; justify-content: center;
+        color: #94a3b8; font-size: 0.8rem;
+    }
+    .badge-sexe-M { background: #2563eb; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.68rem; font-weight: 700; }
+    .badge-sexe-F { background: #db2777; color: white; padding: 2px 6px; border-radius: 3px; font-size: 0.68rem; font-weight: 700; }
+    .badge-classe { background: #0891b2; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.68rem; font-weight: 600; }
+    .badge-statut-nouveau { background: #dcfce7; color: #166534; padding: 2px 6px; border-radius: 3px; font-size: 0.68rem; font-weight: 600; }
+    .badge-statut-redoublant { background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 3px; font-size: 0.68rem; font-weight: 600; }
+    .badge-statut-transfere { background: #e0e7ff; color: #3730a3; padding: 2px 6px; border-radius: 3px; font-size: 0.68rem; font-weight: 600; }
+    .cell-matricule { font-family: monospace; font-weight: 700; color: #1e40af; }
+    .cell-nom { font-weight: 700; }
+    .action-cell { display: flex; gap: 3px; }
+    .action-cell .btn { padding: 2px 6px; font-size: 0.72rem; border-radius: 3px; }
+    .scroll-hint {
+        background: #fef3c7;
+        padding: 5px 12px;
+        font-size: 0.75rem;
+        color: #92400e;
+        border-top: 1px solid #fcd34d;
+        text-align: center;
+    }
+
+    /* ========== BARRE D'ACTIONS EN BAS ========== */
+    .actions-bas {
+        padding: 12px 15px;
+        background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
+        border-top: 2px solid #1e3a8a;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    .actions-bas .section-titre {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: #475569;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-right: 8px;
+    }
+    .actions-bas .btn {
+        font-size: 0.82rem;
+        font-weight: 600;
+        padding: 6px 14px;
+        border-radius: 6px;
+    }
+    .actions-bas .btn-export {
+        background: white;
+        border: 2px solid #cbd5e1;
+        color: #1e40af;
+    }
+    .actions-bas .btn-export:hover {
+        background: #1e40af;
+        color: white;
+        border-color: #1e40af;
+    }
+    .actions-bas .btn-import {
+        background: white;
+        border: 2px solid #cbd5e1;
+        color: #166534;
+    }
+    .actions-bas .btn-import:hover {
+        background: #16a34a;
+        color: white;
+        border-color: #16a34a;
+    }
+    .actions-bas .btn-modele {
+        background: #fef3c7;
+        border: 2px solid #f59e0b;
+        color: #92400e;
+    }
+    .actions-bas .btn-modele:hover {
+        background: #f59e0b;
+        color: white;
+    }
+    .actions-bas .sep {
+        width: 1px;
+        height: 24px;
+        background: #94a3b8;
+        margin: 0 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h4 class="mb-0"><i class="bi bi-people-fill"></i> Élèves — {{ annee.libelle }}</h4>
+        <small class="text-muted">{{ etablissement.nom }} · {{ total }} élève{{ total|pluralize }} inscrit{{ total|pluralize }}</small>
+    </div>
+    <a href="/ecole/eleves/creer/" class="btn btn-primary">
+        <i class="bi bi-person-plus-fill"></i> Nouvel élève
+    </a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="border-left-color:#2563eb;">
+            <div class="icon" style="background:#dbeafe;color:#2563eb;"><i class="bi bi-people-fill"></i></div>
+            <h3>{{ total }}</h3>
+            <p>Total inscrits</p>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="border-left-color:#0891b2;">
+            <div class="icon" style="background:#cffafe;color:#0891b2;"><i class="bi bi-gender-male"></i></div>
+            <h3>{{ nb_garcons }}</h3>
+            <p>Garçons</p>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="border-left-color:#db2777;">
+            <div class="icon" style="background:#fce7f3;color:#db2777;"><i class="bi bi-gender-female"></i></div>
+            <h3>{{ nb_filles }}</h3>
+            <p>Filles</p>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="border-left-color:#7c3aed;">
+            <div class="icon" style="background:#ede9fe;color:#7c3aed;"><i class="bi bi-mortarboard"></i></div>
+            <h3>{{ classes.count }}</h3>
+            <p>Classes</p>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label small fw-semibold">Rechercher</label>
+                <input type="text" name="q" value="{{ recherche }}" class="form-control" placeholder="Nom, prénom ou matricule...">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Classe</label>
+                <select name="classe" class="form-select">
+                    <option value="">Toutes les classes</option>
+                    {% for c in classes %}
+                        <option value="{{ c.id }}" {% if classe_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> Filtrer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="table-excel-container">
+    <div class="table-excel-header">
+        <span><i class="bi bi-table"></i> LISTE DES ÉLÈVES — {{ annee.libelle }}</span>
+        <span class="badge bg-light text-dark">{{ total }} élève{{ total|pluralize }}</span>
+    </div>
+
+    <div class="table-excel-scroll">
+        <table class="table-excel">
+            <thead>
+                <tr>
+                    <th class="col-num">N°</th>
+                    <th>Photo</th>
+                    <th>Matricule</th>
+                    <th>Nom</th>
+                    <th>Prénom(s)</th>
+                    <th>Sexe</th>
+                    <th>Âge</th>
+                    <th>Date nais.</th>
+                    <th>Lieu nais.</th>
+                    <th>Pref/Naiss.</th>
+                    <th>Nationalité</th>
+                    <th>Statut</th>
+                    <th>Classe</th>
+                    <th>Nom père</th>
+                    <th>Tél. père</th>
+                    <th>Prof. père</th>
+                    <th>Email père</th>
+                    <th>Adresse père</th>
+                    <th>Nom mère</th>
+                    <th>Tél. mère</th>
+                    <th>Prof. mère</th>
+                    <th>Email mère</th>
+                    <th>Adresse mère</th>
+                    <th>Nom tuteur</th>
+                    <th>Tél. tuteur</th>
+                    <th>Prof. tuteur</th>
+                    <th>Email tuteur</th>
+                    <th>Adresse tuteur</th>
+                    <th>Adresse élève</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for insc in inscriptions %}
+                {% with e=insc.eleve %}
+                <tr>
+                    <td class="col-num">{{ forloop.counter }}</td>
+                    <td>
+                        {% if e.photo %}
+                            <img src="{{ e.photo.url }}" class="photo-mini">
+                        {% else %}
+                            <div class="photo-mini-placeholder"><i class="bi bi-person-fill"></i></div>
+                        {% endif %}
+                    </td>
+                    <td class="cell-matricule">{{ e.matricule }}</td>
+                    <td class="cell-nom">{{ e.nom }}</td>
+                    <td>{{ e.prenom }}</td>
+                    <td>
+                        {% if e.sexe == 'M' %}
+                            <span class="badge-sexe-M">M</span>
+                        {% else %}
+                            <span class="badge-sexe-F">F</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ e.age }} ans</td>
+                    <td>{{ e.date_naissance|date:"d/m/Y" }}</td>
+                    <td>{{ e.lieu_naissance|default:"—" }}</td>
+                    <td>{{ e.get_prefecture_naissance_display|default:"—" }}</td>
+                    <td>{{ e.nationalite|default:"—" }}</td>
+                    <td>
+                        {% if e.statut == 'nouveau' %}
+                            <span class="badge-statut-nouveau">Nouveau</span>
+                        {% elif e.statut == 'redoublant' %}
+                            <span class="badge-statut-redoublant">Redoublant</span>
+                        {% elif e.statut == 'transfere' %}
+                            <span class="badge-statut-transfere">Transféré</span>
+                        {% endif %}
+                    </td>
+                    <td><span class="badge-classe">{{ insc.classe.nom }}</span></td>
+                    <td>{{ e.nom_pere|default:"—" }}</td>
+                    <td>{{ e.telephone_pere|default:"—" }}</td>
+                    <td>{{ e.profession_pere|default:"—" }}</td>
+                    <td>{{ e.email_pere|default:"—" }}</td>
+                    <td>{{ e.adresse_pere|default:"—" }}</td>
+                    <td>{{ e.nom_mere|default:"—" }}</td>
+                    <td>{{ e.telephone_mere|default:"—" }}</td>
+                    <td>{{ e.profession_mere|default:"—" }}</td>
+                    <td>{{ e.email_mere|default:"—" }}</td>
+                    <td>{{ e.adresse_mere|default:"—" }}</td>
+                    <td>{{ e.nom_tuteur|default:"—" }}</td>
+                    <td>{{ e.telephone_tuteur|default:"—" }}</td>
+                    <td>{{ e.profession_tuteur|default:"—" }}</td>
+                    <td>{{ e.email_tuteur|default:"—" }}</td>
+                    <td>{{ e.adresse_tuteur|default:"—" }}</td>
+                    <td>{{ e.adresse|default:"—" }}</td>
+                    <td>
+                        <div class="action-cell">
+                            <a href="/ecole/eleves/{{ e.id }}/fiche-pdf/" class="btn btn-outline-danger" title="Fiche PDF (bleue)">
+                                <i class="bi bi-file-earmark-pdf"></i>
+                            </a>
+                            <a href="/ecole/eleves/{{ e.id }}/fiche-preremplie-pdf/" class="btn btn-outline-info" title="Fiche pré-remplie (à vérifier par le parent)" target="_blank">
+                                <i class="bi bi-file-earmark-person"></i>
+                            </a>
+                            <a href="/ecole/eleves/{{ e.id }}/" class="btn btn-outline-primary" title="Voir">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                            <a href="/ecole/eleves/{{ e.id }}/modifier/" class="btn btn-outline-secondary" title="Modifier">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endwith %}
+                {% empty %}
+                <tr>
+                    <td colspan="30" class="text-center text-muted py-5">
+                        <i class="bi bi-inbox" style="font-size:2rem;"></i>
+                        <p class="mt-2">Aucun élève inscrit.</p>
+                        <a href="/ecole/eleves/creer/" class="btn btn-primary btn-sm">
+                            <i class="bi bi-person-plus-fill"></i> Inscrire le premier élève
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="scroll-hint">
+        <i class="bi bi-arrows-move"></i> Glissez horizontalement pour voir toutes les informations
+    </div>
+
+    <!-- ========== BARRE D'ACTIONS EN BAS ========== -->
+    <div class="actions-bas">
+
+        <span class="section-titre">
+            <i class="bi bi-download"></i> Exporter :
+        </span>
+
+        <a href="/ecole/eleves/export/excel/?{{ request.GET.urlencode }}"
+           class="btn btn-export" title="Télécharger en Excel">
+            <i class="bi bi-file-earmark-excel text-success"></i> Excel
+        </a>
+
+        <a href="/ecole/eleves/export/csv/?{{ request.GET.urlencode }}"
+           class="btn btn-export" title="Télécharger en CSV">
+            <i class="bi bi-filetype-csv text-info"></i> CSV
+        </a>
+
+        <a href="/ecole/eleves/export/pdf/?{{ request.GET.urlencode }}"
+           class="btn btn-export" title="Télécharger en PDF">
+            <i class="bi bi-file-earmark-pdf text-danger"></i> PDF
+        </a>
+
+        <div class="sep"></div>
+
+        <span class="section-titre">
+            <i class="bi bi-upload"></i> Importer :
+        </span>
+
+        <a href="/ecole/eleves/fiche-vierge-pdf/"
+           class="btn btn-outline-primary" title="Imprimer la fiche vierge d'inscription"
+           target="_blank">
+            <i class="bi bi-file-earmark-person"></i> Fiche vierge à imprimer
+        </a>
+        <a href="/ecole/eleves/modele-excel/"
+           class="btn btn-modele" title="Télécharger le modèle Excel vierge">
+            <i class="bi bi-file-earmark-arrow-down"></i> Modèle
+        </a>
+
+        <a href="/ecole/eleves/importer/"
+           class="btn btn-import" title="Importer un fichier Excel">
+            <i class="bi bi-cloud-upload"></i> Import Excel
+        </a>
+
+    </div>
+</div>
+
+{% endblock %}

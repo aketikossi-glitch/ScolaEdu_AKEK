@@ -1,0 +1,343 @@
+{% extends 'base.html' %}
+
+{% block title %}Notes — {{ classe.nom }} — {{ matiere.nom }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .notes-table { background: white; border: 2px solid #1e3a8a; border-radius: 8px; overflow: hidden; }
+    .notes-table-header { background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%); color: white; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
+    .notes-table table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 0; }
+    .notes-table thead th { background: #1e40af; color: white; padding: 8px 10px; text-align: center; font-weight: 600; font-size: 0.72rem; text-transform: uppercase; border-right: 1px solid #3b82f6; white-space: nowrap; }
+    .notes-table thead th:last-child { border-right: none; }
+    .notes-table tbody td { padding: 4px 8px; border-bottom: 1px solid #e2e8f0; border-right: 1px solid #f1f5f9; vertical-align: middle; height: 40px; }
+    .notes-table tbody tr:nth-child(even) { background: #f8fafc; }
+    .notes-table tbody tr:hover { background: #dbeafe; }
+    .notes-table .note-input { width: 70px; text-align: center; font-weight: 600; border: 1px solid #cbd5e1; border-radius: 4px; }
+    .notes-table .note-input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+    .notes-table .note-input.invalide {
+        border-color: #dc2626;
+        background: #fee2e2;
+        animation: shake 0.3s;
+    }
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-3px); }
+        75% { transform: translateX(3px); }
+    }
+    .moy-devoirs { font-weight: 700; color: #0891b2; text-align: center; }
+    .moy-finale { font-weight: 700; color: #16a34a; font-size: 1.05rem; text-align: center; }
+    .moy-finale.faible { color: #dc2626; }
+    .cell-num { text-align: center; color: #64748b; font-weight: 600; }
+    .cell-matricule { font-family: monospace; font-weight: 600; color: #1e40af; }
+    .cell-nom { font-weight: 700; }
+    .alerte-flottante {
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: #dc2626;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(220,38,38,0.4);
+        z-index: 9999;
+        display: none;
+        animation: slideUp 0.3s;
+    }
+    @keyframes slideUp {
+        from { opacity: 0; transform: translate(-50%, 20px); }
+        to { opacity: 1; transform: translate(-50%, 0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h4 class="mb-0"><i class="bi bi-pencil-square"></i> Saisie des notes</h4>
+        <small class="text-muted">
+            {{ etablissement.nom }} · <strong>{{ classe.nom }}</strong> ·
+            <strong>{{ matiere.nom }}</strong> · <strong>{{ trimestre.get_numero_display }}</strong>
+        </small>
+    </div>
+    <a href="/ecole/notes/" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Changer de sélection
+    </a>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="alert alert-info small d-flex gap-2">
+    <i class="bi bi-info-circle-fill"></i>
+    <div>
+        <strong>Règles de calcul :</strong><br>
+        • Une note <strong>vide</strong> est <strong>ignorée</strong> dans le calcul<br>
+        • Un <strong>0</strong> est compté comme une vraie note<br>
+        • Les notes sont <strong>obligatoirement entre 0 et 20</strong><br>
+        • <strong>Moyenne devoirs</strong> = moyenne des devoirs saisis<br>
+        • <strong>Moyenne finale</strong> = (Moyenne devoirs + Compo) / 2
+    </div>
+</div>
+
+<form method="post" id="formNotes">
+    {% csrf_token %}
+    <input type="hidden" name="classe" value="{{ classe.id }}">
+    <input type="hidden" name="matiere" value="{{ matiere.id }}">
+    <input type="hidden" name="trimestre" value="{{ trimestre.id }}">
+
+    <div class="notes-table">
+        <div class="notes-table-header">
+            <span><i class="bi bi-table"></i> NOTES — {{ classe.nom }} · {{ matiere.nom }} (Coef. {{ matiere_classe.coefficient }})</span>
+            <span class="badge bg-light text-dark">{{ nb_eleves }} élève{{ nb_eleves|pluralize }}</span>
+        </div>
+
+        <div class="table-responsive">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width:40px;">N°</th>
+                        <th style="width:100px;">Matricule</th>
+                        <th>Nom et Prénom(s)</th>
+                        <th style="width:60px;">Sexe</th>
+                        <th style="width:100px;">Dev 1 /20</th>
+                        <th style="width:100px;">Dev 2 /20</th>
+                        <th style="width:90px;">Moy devoirs</th>
+                        <th style="width:100px;">Compo /20</th>
+                        <th style="width:90px;">Moy finale</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for d in eleves_data %}
+                    <tr>
+                        <td class="cell-num">{{ forloop.counter }}</td>
+                        <td class="cell-matricule">{{ d.matricule }}</td>
+                        <td class="cell-nom">{{ d.nom }} {{ d.prenom }}</td>
+                        <td class="text-center">
+                            {% if d.sexe == 'M' %}<span class="badge bg-primary">M</span>
+                            {% else %}<span class="badge bg-danger">F</span>{% endif %}
+                        </td>
+                        <td class="text-center">
+                            <input type="number" name="dev1_{{ d.eleve.id }}"
+                                   class="note-input"
+                                   step="0.25" min="0" max="20"
+                                   value="{{ d.dev1_str }}"
+                                   data-eleve="{{ d.eleve.id }}">
+                        </td>
+                        <td class="text-center">
+                            <input type="number" name="dev2_{{ d.eleve.id }}"
+                                   class="note-input"
+                                   step="0.25" min="0" max="20"
+                                   value="{{ d.dev2_str }}"
+                                   data-eleve="{{ d.eleve.id }}">
+                        </td>
+                        <td class="moy-devoirs" id="moy_dev_{{ d.eleve.id }}">
+                            {% if d.moy_devoirs is not None %}{{ d.moy_devoirs }}{% else %}—{% endif %}
+                        </td>
+                        <td class="text-center">
+                            <input type="number" name="compo_{{ d.eleve.id }}"
+                                   class="note-input"
+                                   step="0.25" min="0" max="20"
+                                   value="{{ d.compo_str }}"
+                                   data-eleve="{{ d.eleve.id }}">
+                        </td>
+                        <td class="moy-finale" id="moy_fin_{{ d.eleve.id }}">
+                            {% if d.moy_finale is not None %}{{ d.moy_finale }}{% else %}—{% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">
+                            Aucun élève inscrit dans cette classe.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-4 mb-5 flex-wrap">
+        <a href="/ecole/notes/" class="btn btn-outline-secondary">
+            <i class="bi bi-x-circle"></i> Annuler
+        </a>
+        <button type="submit" class="btn btn-primary flex-grow-1">
+            <i class="bi bi-save"></i> Enregistrer toutes les notes
+        </button>
+        <a href="/ecole/notes/verification/?classe={{ classe.id }}&trimestre={{ trimestre.id }}"
+           class="btn btn-success flex-grow-1">
+            <i class="bi bi-clipboard-check"></i> Voir la vérification des notes
+        </a>
+    </div>
+</form>
+
+<!-- Message d'alerte flottant -->
+<div class="alerte-flottante" id="alerteFlottante">
+    ⚠️ <span id="alerteTexte">Note invalide (0-20)</span>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = document.querySelectorAll('.note-input');
+    const alerteFlottante = document.getElementById('alerteFlottante');
+    const alerteTexte = document.getElementById('alerteTexte');
+    let timeoutAlerte = null;
+
+    function afficherAlerte(message) {
+        alerteTexte.textContent = message;
+        alerteFlottante.style.display = 'block';
+        clearTimeout(timeoutAlerte);
+        timeoutAlerte = setTimeout(() => {
+            alerteFlottante.style.display = 'none';
+        }, 2500);
+    }
+
+    function validerInput(input) {
+        const val = input.value.trim();
+        if (val === '') {
+            input.classList.remove('invalide');
+            return true;
+        }
+        const num = parseFloat(val);
+        if (isNaN(num)) {
+            input.classList.add('invalide');
+            afficherAlerte('Veuillez saisir un nombre valide');
+            return false;
+        }
+        if (num < 0) {
+            input.value = '0';
+            input.classList.add('invalide');
+            afficherAlerte('La note minimum est 0');
+            setTimeout(() => input.classList.remove('invalide'), 500);
+            return false;
+        }
+        if (num > 20) {
+            input.value = '20';
+            input.classList.add('invalide');
+            afficherAlerte('La note maximum est 20');
+            setTimeout(() => input.classList.remove('invalide'), 500);
+            return false;
+        }
+        input.classList.remove('invalide');
+        return true;
+    }
+
+    function getValeur(eleveId, champ) {
+        const input = document.querySelector(`input[name="${champ}_${eleveId}"]`);
+        if (!input) return null;
+        const val = input.value.trim();
+        if (val === '') return null;
+        const num = parseFloat(val);
+        return isNaN(num) ? null : num;
+    }
+
+    function calculer(eleveId) {
+        const dev1 = getValeur(eleveId, 'dev1');
+        const dev2 = getValeur(eleveId, 'dev2');
+        const compo = getValeur(eleveId, 'compo');
+
+        const moyDev = document.getElementById(`moy_dev_${eleveId}`);
+        const moyFin = document.getElementById(`moy_fin_${eleveId}`);
+
+        let devoirs = [];
+        if (dev1 !== null) devoirs.push(dev1);
+        if (dev2 !== null) devoirs.push(dev2);
+
+        let moyDevoirs = null;
+        if (devoirs.length > 0) {
+            moyDevoirs = devoirs.reduce((a, b) => a + b, 0) / devoirs.length;
+            moyDev.textContent = moyDevoirs.toFixed(2);
+        } else {
+            moyDev.textContent = '—';
+        }
+
+        let valeurs = [];
+        if (moyDevoirs !== null) valeurs.push(moyDevoirs);
+        if (compo !== null) valeurs.push(compo);
+
+        if (valeurs.length > 0) {
+            const moyFinale = valeurs.reduce((a, b) => a + b, 0) / valeurs.length;
+            moyFin.textContent = moyFinale.toFixed(2);
+            moyFin.classList.remove('faible');
+            if (moyFinale < 8) moyFin.classList.add('faible');
+        } else {
+            moyFin.textContent = '—';
+            moyFin.classList.remove('faible');
+        }
+    }
+
+    inputs.forEach(input => {
+        // Validation à la saisie
+        input.addEventListener('input', function() {
+            const val = this.value.trim();
+            if (val === '') {
+                this.classList.remove('invalide');
+                calculer(this.dataset.eleve);
+                return;
+            }
+            const num = parseFloat(val);
+            if (!isNaN(num) && (num < 0 || num > 20)) {
+                this.classList.add('invalide');
+            } else {
+                this.classList.remove('invalide');
+            }
+            calculer(this.dataset.eleve);
+        });
+
+        // Validation au blur (quand on quitte le champ)
+        input.addEventListener('blur', function() {
+            validerInput(this);
+            calculer(this.dataset.eleve);
+        });
+
+        // Bloquer les touches fléchées qui dépassent
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                const val = parseFloat(this.value) || 0;
+                const step = parseFloat(this.step) || 1;
+                if (e.key === 'ArrowUp' && val + step > 20) {
+                    e.preventDefault();
+                    this.value = '20';
+                    afficherAlerte('La note maximum est 20');
+                }
+                if (e.key === 'ArrowDown' && val - step < 0) {
+                    e.preventDefault();
+                    this.value = '0';
+                    afficherAlerte('La note minimum est 0');
+                }
+            }
+        });
+    });
+
+    // Validation avant soumission
+    document.getElementById('formNotes').addEventListener('submit', function(e) {
+        let aErreur = false;
+        inputs.forEach(input => {
+            const val = input.value.trim();
+            if (val !== '') {
+                const num = parseFloat(val);
+                if (isNaN(num) || num < 0 || num > 20) {
+                    input.classList.add('invalide');
+                    aErreur = true;
+                }
+            }
+        });
+
+        if (aErreur) {
+            e.preventDefault();
+            afficherAlerte('Certaines notes sont invalides (0-20)');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    });
+});
+</script>
+
+{% endblock %}

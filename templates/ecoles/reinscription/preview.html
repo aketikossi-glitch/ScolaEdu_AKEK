@@ -1,0 +1,318 @@
+{% extends 'base.html' %}
+
+{% block title %}Réinscription — {{ etablissement.nom }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <a href="/dashboard/" class="btn btn-sm btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h4 class="d-inline-block mb-0">
+            <i class="bi bi-arrow-up-circle-fill text-primary"></i>
+            Réinscription automatique
+        </h4>
+        <div class="small text-muted ms-5">
+            {{ etablissement.nom }} · Note de passage : <b>{{ note_passage }}/20</b>
+        </div>
+    </div>
+</div>
+
+{% if etape == 'selection' %}
+
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i>
+        <strong>Principe :</strong>
+        <ul class="mb-0 mt-2">
+            <li>Élèves avec <b>moyenne annuelle ≥ {{ note_passage }}</b> → passent au niveau supérieur</li>
+            <li>Élèves avec <b>moyenne annuelle &lt; {{ note_passage }}</b> → <b>redoublants</b></li>
+            <li><b>Classes d'examen</b> (CM2, 3ème, 1ère, Tle) : <b>exclues</b></li>
+        </ul>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0"><i class="bi bi-calendar-event text-primary"></i> Choisir les années</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label fw-semibold">Année source (élèves actuels)</label>
+                    <select name="annee_src" class="form-select" required>
+                        {% for a in toutes_annees %}
+                        <option value="{{ a.id }}" {% if annee_src and a.id == annee_src.id %}selected{% endif %}>
+                            {{ a.libelle }}{% if a.en_cours %} — En cours{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-1 text-center pb-3">
+                    <i class="bi bi-arrow-right fs-3 text-primary"></i>
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label fw-semibold">Année cible (destination)</label>
+                    <select name="annee_cible" class="form-select" required>
+                        {% for a in toutes_annees %}
+                        <option value="{{ a.id }}" {% if annee_cible and a.id == annee_cible.id %}selected{% endif %}>
+                            {{ a.libelle }}{% if a.en_cours %} — En cours{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-primary w-100" title="Prévisualiser">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+{% else %}
+
+    {# ===== ÉTAPE PREVIEW INTERACTIF ===== #}
+
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <div class="d-flex gap-4 align-items-center flex-wrap">
+                        <div><span class="text-muted small">Source</span><br><b>{{ annee_src.libelle }}</b></div>
+                        <div><i class="bi bi-arrow-right fs-4 text-primary"></i></div>
+                        <div><span class="text-muted small">Cible</span><br><b>{{ annee_cible.libelle }}</b></div>
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="{% url 'ecoles:reinscription_preview' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Changer d'années
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-3">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="icon bg-success-subtle text-success"><i class="bi bi-arrow-up-circle-fill"></i></div>
+                <h3>{{ compteurs.passe }}</h3>
+                <p>Passent au niveau supérieur</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="icon bg-warning-subtle text-warning"><i class="bi bi-arrow-repeat"></i></div>
+                <h3>{{ compteurs.redouble }}</h3>
+                <p>Redoublants</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="icon bg-secondary-subtle text-secondary"><i class="bi bi-mortarboard-fill"></i></div>
+                <h3>{{ compteurs.examen }}</h3>
+                <p>Classes d'examen (exclus)</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="icon bg-danger-subtle text-danger"><i class="bi bi-exclamation-triangle-fill"></i></div>
+                <h3>{{ compteurs.erreur }}</h3>
+                <p>Erreurs / classe cible manquante</p>
+            </div>
+        </div>
+    </div>
+
+    {# ===== BOUTONS GLOBAUX PAR NIVEAU ===== #}
+    {% if groupes_niveaux %}
+    <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white border-bottom">
+            <h5 class="mb-0"><i class="bi bi-magic text-primary"></i> Affectation rapide par niveau</h5>
+            <small class="text-muted">Place tous les élèves d'un niveau cible dans la même classe.</small>
+        </div>
+        <div class="card-body">
+            <div class="row g-2">
+                {% for g in groupes_niveaux %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="border rounded p-3 h-100">
+                        <div class="fw-semibold mb-2">
+                            {{ g.libelle }}
+                            <span class="badge bg-primary-subtle text-primary-emphasis border border-primary-subtle ms-1">{{ g.nb_eleves }}</span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <select class="form-select form-select-sm" id="global_select_{{ g.niveau }}">
+                                {% for c in g.classes %}
+                                <option value="{{ c.id }}">{{ c.nom }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="button" class="btn btn-sm btn-outline-primary"
+                                    onclick="placerTous('{{ g.niveau }}', 'global_select_{{ g.niveau }}')">
+                                <i class="bi bi-arrow-down-circle"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'ecoles:reinscription_executer' %}" id="formReinscription">
+        {% csrf_token %}
+        <input type="hidden" name="annee_src" value="{{ annee_src.id }}">
+        <input type="hidden" name="annee_cible" value="{{ annee_cible.id }}">
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="bi bi-list-ul text-primary"></i> Détail ({{ total }} élèves)</h5>
+                <small class="text-muted">Choisissez la classe cible de chaque élève. Les élèves en rouge n'ont pas encore été affectés.</small>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Élève</th>
+                            <th>Classe source</th>
+                            <th class="text-center">Moy. T1</th>
+                            <th class="text-center">Moy. T2</th>
+                            <th class="text-center">Moy. T3</th>
+                            <th class="text-center">Moy. annuelle</th>
+                            <th>Décision</th>
+                            <th style="min-width:200px;">Classe cible</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for l in lignes %}
+                        <tr class="{% if l.erreur_cible %}table-danger{% endif %}">
+                            <td>
+                                <div class="fw-semibold">{{ l.eleve.nom_complet }}</div>
+                                <div class="small text-muted">{{ l.eleve.matricule }}</div>
+                            </td>
+                            <td>{{ l.classe_src.nom }}</td>
+                            {% for d in l.details_trimestres %}
+                            <td class="text-center">
+                                {% if d.moyenne is not None %}{{ d.moyenne }}{% else %}<span class="text-muted">—</span>{% endif %}
+                            </td>
+                            {% endfor %}
+                            <td class="text-center fw-bold">
+                                {% if l.moy_annuelle is not None %}{{ l.moy_annuelle }}{% else %}<span class="text-muted">—</span>{% endif %}
+                            </td>
+                            <td>
+                                {% if l.decision == 'passe' %}
+                                    <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">
+                                        <i class="bi bi-arrow-up"></i> Passe
+                                    </span>
+                                {% elif l.decision == 'redouble' %}
+                                    <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">
+                                        <i class="bi bi-arrow-repeat"></i> Redouble
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">
+                                        <i class="bi bi-mortarboard"></i> Examen
+                                    </span>
+                                {% endif %}
+                                <div class="small text-muted mt-1">{{ l.raison }}</div>
+                            </td>
+                            <td>
+                                {% if l.erreur_cible %}
+                                    <span class="text-danger small">{{ l.erreur_cible }}</span>
+                                {% elif l.classes_dispo %}
+                                    <select name="classe_cible_{{ l.eleve.id }}"
+                                            class="form-select form-select-sm classe-cible-select"
+                                            data-niveau="{{ l.niveau_cible }}"
+                                            data-eleve-id="{{ l.eleve.id }}"
+                                            {% if not l.classe_pre_selection %}data-no-preselect="1"{% endif %}>
+                                        <option value="">— Choisir —</option>
+                                        {% for c in l.classes_dispo %}
+                                        <option value="{{ c.id }}" {% if l.classe_pre_selection and c.id == l.classe_pre_selection.id %}selected{% endif %}>
+                                            {{ c.nom }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    {% if not l.classe_pre_selection %}
+                                    <div class="small text-danger mt-1">
+                                        <i class="bi bi-exclamation-triangle"></i> Choix obligatoire (plusieurs classes disponibles)
+                                    </div>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% if compteurs.erreur > 0 %}
+        <div class="alert alert-warning mt-3">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <strong>{{ compteurs.erreur }} élève(s) ont une erreur.</strong>
+            Créez les classes manquantes dans <b>{{ annee_cible.libelle }}</b> puis recommencez.
+        </div>
+        {% endif %}
+
+        <div class="card border-0 shadow-sm mt-3">
+            <div class="card-body">
+                <h5><i class="bi bi-shield-exclamation text-danger"></i> Confirmation finale</h5>
+                <p class="small text-muted">
+                    Un <b>backup automatique</b> sera créé avant l'opération.
+                    Les inscriptions seront créées dans <b>{{ annee_cible.libelle }}</b> avec les classes choisies ci-dessus.
+                </p>
+
+                <div class="row g-2 align-items-end">
+                    <div class="col-md-8">
+                        <label class="form-label fw-semibold small">
+                            Tapez <code>CONFIRMER</code> pour valider :
+                        </label>
+                        <input type="text" name="confirmation" id="champConfirmation" class="form-control" placeholder="CONFIRMER" required>
+                    </div>
+                    <div class="col-md-4 d-flex gap-2">
+                        <a href="{% url 'ecoles:reinscription_preview' %}" class="btn btn-outline-secondary flex-grow-1">
+                            <i class="bi bi-x-circle"></i> Annuler
+                        </a>
+                        <button type="submit" class="btn btn-danger flex-grow-1" id="btnExecuter">
+                            <i class="bi bi-check2-circle"></i> Exécuter
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <script>
+    function placerTous(niveau, selectId) {
+        const valeur = document.getElementById(selectId).value;
+        if (!valeur) return;
+        const selects = document.querySelectorAll('select.classe-cible-select[data-niveau="' + niveau + '"]');
+        selects.forEach(function(s) {
+            s.value = valeur;
+            s.classList.remove('is-invalid');
+        });
+    }
+
+    // Validation JS avant soumission
+    document.getElementById('formReinscription').addEventListener('submit', function(e) {
+        let erreurs = 0;
+        const selects = document.querySelectorAll('select.classe-cible-select');
+        selects.forEach(function(s) {
+            // Ignorer ceux qui ont une erreur (pas dans classes_dispo)
+            if (s.closest('tr').classList.contains('table-danger')) return;
+            if (!s.value) {
+                s.classList.add('is-invalid');
+                erreurs++;
+            } else {
+                s.classList.remove('is-invalid');
+            }
+        });
+        if (erreurs > 0) {
+            e.preventDefault();
+            alert("⚠️ " + erreurs + " élève(s) n'ont pas encore de classe cible. Faites vos choix puis réessayez.");
+            return false;
+        }
+    });
+    </script>
+
+{% endif %}
+{% endblock %}

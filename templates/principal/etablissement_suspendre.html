@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titre }} — ScolaEdu_AKEK{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+
+        <div class="card border-0 shadow-sm border-top border-danger border-3">
+            <div class="card-body p-4">
+
+                <div class="text-center mb-4">
+                    <div style="font-size:3rem;">⏸️</div>
+                    <h4 class="mt-2">Suspendre l'établissement ?</h4>
+                </div>
+
+                <div class="alert alert-danger">
+                    <strong>Vous êtes sur le point de suspendre :</strong><br>
+                    🏫 <strong>{{ etablissement.nom }}</strong> ({{ etablissement.code }})
+                </div>
+
+                <div class="alert alert-warning">
+                    <strong>Conséquences :</strong>
+                    <ul class="mb-0 mt-2">
+                        <li>Les utilisateurs ne pourront plus se connecter</li>
+                        <li>Les données sont <strong>conservées</strong></li>
+                        <li>Vous pourrez réactiver à tout moment</li>
+                    </ul>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Raison de la suspension (optionnel)</label>
+                        <textarea name="raison" class="form-control" rows="3"
+                                  placeholder="Ex: Non-respect des engagements signés"></textarea>
+                        <small class="text-muted">Cette raison sera affichée aux utilisateurs bloqués.</small>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <a href="/principal/etablissements/" class="btn btn-outline-secondary flex-grow-1">
+                            Annuler
+                        </a>
+                        <button type="submit" class="btn btn-danger flex-grow-1">
+                            <i class="bi bi-pause-circle"></i> Suspendre
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titre }}{% endblock %}
+
+{% block content %}
+
+<div class="container py-4" style="max-width: 700px;">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0"><i class="bi bi-person-badge"></i> {{ titre }}</h4>
+        <a href="/ecole/classes/" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <i class="bi bi-mortarboard"></i> Affecter un professeur titulaire
+        </div>
+        <div class="card-body">
+
+            <div class="alert alert-info">
+                <strong>{{ classe.nom }}</strong> — Niveau {{ classe.get_niveau_display }}<br>
+                <small>Actuellement : 
+                    {% if classe.titulaire %}
+                        <strong>{{ classe.titulaire.user.get_full_name }}</strong>
+                    {% else %}
+                        <em>Aucun titulaire</em>
+                    {% endif %}
+                </small>
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Professeur titulaire</label>
+                    <select name="titulaire" class="form-select">
+                        <option value="">— Aucun (retirer) —</option>
+                        {% for ens in enseignants %}
+                            <option value="{{ ens.id }}"
+                                {% if classe.titulaire and classe.titulaire.id == ens.id %}selected{% endif %}>
+                                {{ ens.user.get_full_name|default:ens.user.username }}
+                                {% if ens.specialite %} ({{ ens.specialite }}){% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    <small class="text-muted">
+                        Le titulaire est le professeur principal de la classe.
+                    </small>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <a href="/ecole/classes/" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check2-circle"></i> Enregistrer
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

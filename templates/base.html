@@ -1,0 +1,446 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ScolaEdu_AKEK{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --sidebar-width: 260px;
+            --sidebar-bg: #1e293b;
+            --sidebar-hover: #334155;
+            --sidebar-text: #cbd5e1;
+            --sidebar-text-muted: #94a3b8;
+        }
+        body {
+            background: #f1f5f9;
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+        }
+
+        /* ========== SIDEBAR ========== */
+        .sidebar {
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            width: var(--sidebar-width);
+            background: var(--sidebar-bg);
+            color: white;
+            z-index: 1040;
+            overflow-y: auto;
+            transition: transform 0.3s;
+        }
+        .sidebar::-webkit-scrollbar { width: 6px; }
+        .sidebar::-webkit-scrollbar-track { background: #0f172a; }
+        .sidebar::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+
+        /* Menu de navigation */
+        .sidebar-nav {
+            padding: 12px 0;
+        }
+        .sidebar-nav .nav-link {
+            color: var(--sidebar-text);
+            padding: 12px 20px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: background 0.15s;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-nav .nav-link:hover {
+            background: var(--sidebar-hover);
+            color: white;
+        }
+        .sidebar-nav .nav-link.active {
+            background: rgba(59,130,246,0.15);
+            border-left-color: #3b82f6;
+            color: white;
+        }
+        .sidebar-nav .nav-link.logout-link {
+            color: #f87171;
+            margin-top: 8px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            padding-top: 16px;
+        }
+        .sidebar-nav .nav-link.logout-link:hover {
+            background: rgba(248,113,113,0.15);
+            color: #fca5a5;
+        }
+
+        /* Titre de section (accordéon) */
+        .sidebar-nav .section-toggle {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: var(--sidebar-text-muted);
+            text-align: left;
+            padding: 14px 20px 6px 20px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+        .sidebar-nav .section-toggle:hover { color: var(--sidebar-text); }
+        .sidebar-nav .section-toggle .chev {
+            transition: transform 0.2s;
+            font-size: 0.75rem;
+        }
+        .sidebar-nav .section-toggle[aria-expanded="true"] .chev {
+            transform: rotate(90deg);
+        }
+        .sidebar-nav .section-body .nav-link {
+            padding-left: 42px;
+            font-size: 0.85rem;
+        }
+
+        /* ========== CONTENU ========== */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content-topbar {
+            background: white;
+            padding: 12px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .content-topbar .info-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 0.85rem;
+            color: #475569;
+            flex-wrap: wrap;
+        }
+        .content-topbar .info-left .badge-ecole {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.78rem;
+        }
+        .content-topbar .info-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.82rem;
+            color: #64748b;
+        }
+
+        .content-body {
+            padding: 20px 24px;
+            flex-grow: 1;
+            max-width: 1600px;
+            width: 100%;
+        }
+
+        /* Bouton hamburger (mobile) */
+        .mobile-burger {
+            display: none;
+            position: fixed;
+            top: 12px; left: 12px;
+            z-index: 1050;
+            background: var(--sidebar-bg);
+            color: white;
+            border: none;
+            width: 42px; height: 42px;
+            border-radius: 10px;
+            font-size: 1.3rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            cursor: pointer;
+        }
+
+        .overlay-bg {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1035;
+            display: none;
+        }
+        .overlay-bg.show { display: block; }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 991px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .mobile-burger {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .content-topbar {
+                padding-left: 64px;
+            }
+        }
+
+        /* Stat cards */
+        .stat-card {
+            background: white; border-radius: 14px; padding: 22px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            height: 100%; border-left: 4px solid var(--primary);
+        }
+        .stat-card .icon {
+            width: 48px; height: 48px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.4rem; margin-bottom: 12px;
+        }
+        .stat-card h3 { margin: 0; font-weight: 700; }
+        .stat-card p { margin: 0; color: #64748b; font-size: 0.9rem; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- ========== SIDEBAR LATÉRALE ========== -->
+    <aside class="sidebar" id="sidebar">
+
+        <nav class="sidebar-nav">
+
+            <a href="/dashboard/" class="nav-link">
+                <i class="bi bi-house-door-fill"></i> Tableau de bord
+            </a>
+
+            {% if user.profil.role == 'admin_principal' %}
+                <div class="section-title">
+                    <button class="section-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#sec_admin" aria-expanded="false">
+                        <span>Administration</span>
+                        <i class="bi bi-chevron-right chev"></i>
+                    </button>
+                </div>
+                <div class="collapse section-body" id="sec_admin">
+                    <a href="/principal/etablissements/" class="nav-link"><i class="bi bi-building"></i> Établissements</a>
+                    <a href="/principal/utilisateurs/" class="nav-link"><i class="bi bi-people-fill"></i> Utilisateurs</a>
+                    <a href="/admin/" class="nav-link"><i class="bi bi-shield-lock-fill"></i> Admin Django</a>
+                </div>
+
+            {% elif user.profil.role in "chef_etablissement,secretaire" %}
+
+                <div class="section-title">
+                    <button class="section-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#sec_gestion" aria-expanded="false">
+                        <span>Gestion</span>
+                        <i class="bi bi-chevron-right chev"></i>
+                    </button>
+                </div>
+                <div class="collapse section-body" id="sec_gestion">
+                    <a href="/ecole/eleves/" class="nav-link"><i class="bi bi-people-fill"></i> Élèves</a>
+                    <a href="/ecole/classes/" class="nav-link"><i class="bi bi-mortarboard-fill"></i> Classes</a>
+                    <a href="/ecole/matieres/" class="nav-link"><i class="bi bi-book"></i> Matières</a>
+                    <a href="/ecole/matieres-classes/" class="nav-link"><i class="bi bi-diagram-3"></i> Matières/classes</a>
+                </div>
+
+                <div class="section-title">
+                    <button class="section-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#sec_notes" aria-expanded="false">
+                        <span>Notes</span>
+                        <i class="bi bi-chevron-right chev"></i>
+                    </button>
+                </div>
+                <div class="collapse section-body" id="sec_notes">
+                    <a href="/ecole/notes/" class="nav-link"><i class="bi bi-pencil-square"></i> Saisie des notes</a>
+                    <a href="/ecole/notes/verification/" class="nav-link"><i class="bi bi-clipboard-check"></i> Vérification des notes</a>
+                    <a href="/ecole/presences/" class="nav-link"><i class="bi bi-calendar-check"></i> Présences</a>
+                </div>
+
+                <div class="section-title">
+                    <button class="section-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#sec_docs" aria-expanded="false">
+                        <span>Documents</span>
+                        <i class="bi bi-chevron-right chev"></i>
+                    </button>
+                </div>
+                <div class="collapse section-body" id="sec_docs">
+                    <a href="/ecole/bulletins/" class="nav-link"><i class="bi bi-file-earmark-text"></i> Bulletins</a>
+                    <a href="/ecole/releves/" class="nav-link"><i class="bi bi-table"></i> Relevés de notes</a>
+                    <a href="/ecole/stats/" class="nav-link"><i class="bi bi-graph-up-arrow"></i> Statistiques</a>
+                    <a href="/ecole/cartes/" class="nav-link"><i class="bi bi-card-heading"></i> Cartes scolaires</a>
+                    <a href="/ecole/attestations/" class="nav-link"><i class="bi bi-file-earmark-check"></i> Attestations</a>
+                    <a href="/ecole/listes/" class="nav-link"><i class="bi bi-list-ul"></i> Listes de classe</a>
+                    <a href="/ecole/discipline/" class="nav-link"><i class="bi bi-shield-exclamation"></i> Discipline</a>
+                </div>
+
+                {% if user.profil.role == 'chef_etablissement' %}
+                <div class="section-title">
+                    <button class="section-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#sec_params" aria-expanded="false">
+                        <span>Paramètres</span>
+                        <i class="bi bi-chevron-right chev"></i>
+                    </button>
+                </div>
+                <div class="collapse section-body" id="sec_params">
+                    <a href="/ecole/configuration/" class="nav-link"><i class="bi bi-gear-fill"></i> Configuration</a>
+                    <a href="/ecole/verification-config/" class="nav-link"><i class="bi bi-clipboard-check-fill"></i> Vérification config</a>
+                    <a href="/ecole/reinscription/" class="nav-link"><i class="bi bi-arrow-up-circle-fill"></i> Réinscription</a>
+                </div>
+                {% endif %}
+
+            {% elif user.profil.role == 'enseignant' %}
+                <div class="section-title">
+                    <button class="section-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#sec_mesnotes" aria-expanded="false">
+                        <span>Mes notes</span>
+                        <i class="bi bi-chevron-right chev"></i>
+                    </button>
+                </div>
+                <div class="collapse section-body" id="sec_mesnotes">
+                    <a href="/ecole/notes/" class="nav-link"><i class="bi bi-pencil-square"></i> Saisie des notes</a>
+                    <a href="/ecole/notes/verification/" class="nav-link"><i class="bi bi-clipboard-check"></i> Vérification</a>
+                    <a href="/ecole/presences/" class="nav-link"><i class="bi bi-calendar-check"></i> Présences</a>
+                </div>
+
+                <div class="section-title">
+                    <button class="section-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#sec_docs_ens" aria-expanded="false">
+                        <span>Documents</span>
+                        <i class="bi bi-chevron-right chev"></i>
+                    </button>
+                </div>
+                <div class="collapse section-body" id="sec_docs_ens">
+                    <a href="/ecole/bulletins/" class="nav-link"><i class="bi bi-file-earmark-pdf"></i> Bulletins</a>
+                </div>
+
+            {% elif user.profil.role == 'comptable' %}
+                <div class="section-title">
+                    <button class="section-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#sec_compta" aria-expanded="false">
+                        <span>Comptabilité</span>
+                        <i class="bi bi-chevron-right chev"></i>
+                    </button>
+                </div>
+                <div class="collapse section-body" id="sec_compta">
+                    <a href="/ecole/paiements/" class="nav-link"><i class="bi bi-cash-coin"></i> Paiements</a>
+                </div>
+
+            {% elif user.profil.role == 'surveillant' %}
+                <div class="section-title">
+                    <button class="section-toggle" type="button" data-bs-toggle="collapse" data-bs-target="#sec_surv" aria-expanded="false">
+                        <span>Surveillance</span>
+                        <i class="bi bi-chevron-right chev"></i>
+                    </button>
+                </div>
+                <div class="collapse section-body" id="sec_surv">
+                    <a href="/ecole/presences/" class="nav-link"><i class="bi bi-calendar-check"></i> Présences</a>
+                    <a href="/ecole/discipline/" class="nav-link"><i class="bi bi-shield-exclamation"></i> Discipline</a>
+                </div>
+            {% endif %}
+
+            <!-- Déconnexion en bas -->
+            <a href="/auth/logout/" class="nav-link logout-link">
+                <i class="bi bi-box-arrow-right"></i> Déconnexion
+            </a>
+
+        </nav>
+    </aside>
+
+    <!-- ========== OVERLAY MOBILE ========== -->
+    <div class="overlay-bg" id="overlayBg"></div>
+
+    <!-- ========== BOUTON HAMBURGER (mobile) ========== -->
+    <button class="mobile-burger" id="burgerOpen">
+        <i class="bi bi-list"></i>
+    </button>
+
+    <!-- ========== CONTENU PRINCIPAL ========== -->
+    <main class="main-content">
+
+        <div class="content-topbar">
+            <div class="info-left">
+                <span class="badge-ecole">
+                    🏫 {{ user.profil.etablissement.nom|default:"ScolaEdu_AKEK" }}
+                </span>
+            </div>
+            <div class="info-right">
+                <i class="bi bi-calendar3"></i>
+                <span>{% now "l d F Y" %}</span>
+            </div>
+        </div>
+
+        {% if messages %}
+            <div style="padding: 12px 24px 0 24px;">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show mb-2">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="content-body">
+            {% block content %}{% endblock %}
+        </div>
+
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const burger = document.getElementById('burgerOpen');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlayBg');
+
+        if (burger) {
+            burger.addEventListener('click', () => {
+                sidebar.classList.add('show');
+                overlay.classList.add('show');
+            });
+            overlay.addEventListener('click', () => {
+                sidebar.classList.remove('show');
+                overlay.classList.remove('show');
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const path = window.location.pathname;
+
+            const liens = document.querySelectorAll('.section-body .nav-link');
+            liens.forEach(function(link) {
+                const href = link.getAttribute('href');
+                if (!href) return;
+                const cleanHref = href.replace(/\/$/, '');
+                if (path === href || path.startsWith(cleanHref + '/')) {
+                    const parent = link.closest('.section-body');
+                    if (parent && parent.classList.contains('collapse')) {
+                        const instance = bootstrap.Collapse.getOrCreateInstance(parent, { toggle: false });
+                        instance.show();
+                        const btn = document.querySelector('[data-bs-target="#' + parent.id + '"]');
+                        if (btn) btn.setAttribute('aria-expanded', 'true');
+                    }
+                    link.classList.add('active');
+                }
+            });
+
+            if (path === '/dashboard/' || path === '/') {
+                const dashLink = document.querySelector('.sidebar-nav > .nav-link[href="/dashboard/"]');
+                if (dashLink) dashLink.classList.add('active');
+            }
+
+            document.querySelectorAll('.sidebar-nav .nav-link').forEach(function(link) {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth < 992) {
+                        sidebar.classList.remove('show');
+                        overlay.classList.remove('show');
+                    }
+                });
+            });
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

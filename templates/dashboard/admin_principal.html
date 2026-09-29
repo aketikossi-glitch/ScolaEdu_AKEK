@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Principal — ScolaEdu_AKEK{% endblock %}
+
+{% block content %}
+
+<!-- ===== EN-TÊTE ===== -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h4 class="mb-0"><i class="bi bi-speedometer2"></i> Tableau de bord — Administration centrale</h4>
+        <small class="text-muted">Vue globale de la plateforme ScolaEdu_AKEK</small>
+    </div>
+    <a href="/principal/etablissements/creer/" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Créer un établissement
+    </a>
+</div>
+
+<!-- ===== STATISTIQUES ===== -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="border-left-color:#2563eb;">
+            <div class="icon" style="background:#dbeafe;color:#2563eb;"><i class="bi bi-building"></i></div>
+            <h3>{{ nb_etablissements }}</h3>
+            <p>Établissements</p>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="border-left-color:#16a34a;">
+            <div class="icon" style="background:#dcfce7;color:#16a34a;"><i class="bi bi-check-circle"></i></div>
+            <h3>{{ nb_etablissements_actifs }}</h3>
+            <p>Établissements actifs</p>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="border-left-color:#7c3aed;">
+            <div class="icon" style="background:#ede9fe;color:#7c3aed;"><i class="bi bi-people-fill"></i></div>
+            <h3>{{ nb_utilisateurs }}</h3>
+            <p>Utilisateurs actifs</p>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="border-left-color:#f59e0b;">
+            <div class="icon" style="background:#fef3c7;color:#f59e0b;"><i class="bi bi-person-badge"></i></div>
+            <h3>{{ nb_chefs }}</h3>
+            <p>Chefs d'établissement</p>
+        </div>
+    </div>
+
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="border-left-color:#0891b2;">
+            <div class="icon" style="background:#cffafe;color:#0891b2;"><i class="bi bi-calendar-event"></i></div>
+            <h3>{{ nb_annees_actives }}</h3>
+            <p>Années en cours</p>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card" style="border-left-color:#dc2626;">
+            <div class="icon" style="background:#fee2e2;color:#dc2626;"><i class="bi bi-people"></i></div>
+            <h3>{{ nb_eleves_total }}</h3>
+            <p>Élèves (toutes écoles)</p>
+        </div>
+    </div>
+    <div class="col-6 col-md-6">
+        <div class="stat-card" style="border-left-color:#0d9488;">
+            <div class="icon" style="background:#ccfbf1;color:#0d9488;"><i class="bi bi-plus-circle"></i></div>
+            <h3><a href="/principal/etablissements/creer/" class="text-decoration-none">Nouveau</a></h3>
+            <p>Créer un établissement + son chef</p>
+        </div>
+    </div>
+</div>
+
+<!-- ===== DERNIERS ÉTABLISSEMENTS ===== -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-0 pt-3 pb-2 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-clock-history"></i> Derniers établissements créés</h5>
+        <a href="/principal/etablissements/" class="btn btn-sm btn-outline-primary">
+            Voir tous <i class="bi bi-arrow-right"></i>
+        </a>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Code</th>
+                        <th>Nom</th>
+                        <th>Ville</th>
+                        <th>Chef</th>
+                        <th class="text-center">Utilisateurs</th>
+                        <th>Année</th>
+                        <th>Statut</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in etablissements_data %}
+                    <tr>
+                        <td><span class="badge bg-secondary">{{ item.etablissement.code }}</span></td>
+                        <td>
+                            <strong>{{ item.etablissement.nom }}</strong><br>
+                            <small class="text-muted">{{ item.etablissement.get_type_etablissement_display }}</small>
+                        </td>
+                        <td>{{ item.etablissement.ville }}</td>
+                        <td>
+                            {% if item.chef %}
+                                <i class="bi bi-person-circle text-primary"></i>
+                                {{ item.chef.get_full_name|default:item.chef.username }}
+                            {% else %}
+                                <span class="text-warning small"><i class="bi bi-exclamation-triangle"></i> Aucun chef</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-info">{{ item.nb_utilisateurs }}</span>
+                        </td>
+                        <td>
+                            {% if item.annee_active %}
+                                <span class="badge bg-success">{{ item.annee_active.libelle }}</span>
+                            {% else %}
+                                <span class="text-muted small">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.etablissement.actif %}
+                                <span class="badge bg-success">Actif</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactif</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end">
+                            <a href="/principal/etablissements/{{ item.etablissement.id }}/"
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-5">
+                            <i class="bi bi-inbox" style="font-size:2rem;"></i>
+                            <p class="mt-2">Aucun établissement enregistré.</p>
+                            <a href="/principal/etablissements/creer/" class="btn btn-primary btn-sm">
+                                <i class="bi bi-plus-circle"></i> Créer le premier établissement
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block title %}Création réussie — ScolaEdu_AKEK{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+
+        <div class="text-center mb-4">
+            <div style="font-size:4rem;">🎉</div>
+            <h3 class="mt-3">Création réussie !</h3>
+            <p class="text-muted">L'établissement et le compte du chef ont bien été créés.</p>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <h5 class="mb-3"><i class="bi bi-key-fill text-warning"></i> Identifiants du chef d'établissement</h5>
+                <p class="text-muted small mb-3">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Notez ou copiez ces identifiants maintenant. Le mot de passe ne sera <strong>plus jamais affiché</strong>.
+                </p>
+
+                <table class="table table-bordered mb-3">
+                    <tr>
+                        <td class="bg-light fw-semibold" style="width:40%;">Établissement</td>
+                        <td>{{ infos.etablissement }}</td>
+                    </tr>
+                    <tr>
+                        <td class="bg-light fw-semibold">Nom d'utilisateur</td>
+                        <td><code>{{ infos.username }}</code></td>
+                    </tr>
+                    <tr>
+                        <td class="bg-light fw-semibold">Email</td>
+                        <td>{{ infos.email }}</td>
+                    </tr>
+                    <tr>
+                        <td class="bg-light fw-semibold">Mot de passe</td>
+                        <td><code class="text-danger fw-bold" style="font-size:1.05rem;">{{ infos.password }}</code></td>
+                    </tr>
+                </table>
+
+                <button type="button" class="btn btn-outline-primary w-100"
+                        onclick="copierIdentifiants()">
+                    <i class="bi bi-clipboard"></i> Copier les identifiants
+                </button>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="/principal/etablissements/" class="btn btn-outline-secondary flex-grow-1">
+                <i class="bi bi-list"></i> Voir tous les établissements
+            </a>
+            <a href="/principal/etablissements/creer/" class="btn btn-primary flex-grow-1">
+                <i class="bi bi-plus-circle"></i> Créer un autre
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<script>
+function copierIdentifiants() {
+    const texte =
+        "🏫 Établissement : {{ infos.etablissement }}\n" +
+        "🔑 Nom d'utilisateur : {{ infos.username }}\n" +
+        "📧 Email : {{ infos.email }}\n" +
+        "🔐 Mot de passe : {{ infos.password }}\n" +
+        "🌐 Connexion : https://votredomaine.com/auth/login/";
+
+    navigator.clipboard.writeText(texte).then(() => {
+        alert('✅ Identifiants copiés dans le presse-papiers !');
+    }).catch(() => {
+        alert('❌ Impossible de copier automatiquement. Notez-les manuellement.');
+    });
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Discipline — {{ etablissement.nom }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h4 class="mb-0"><i class="bi bi-shield-exclamation text-danger"></i> Discipline</h4>
+        <small class="text-muted">{{ etablissement.nom }}{% if annee %} · Année {{ annee.libelle }}{% endif %}</small>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="icon bg-danger-subtle text-danger"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <h3>{{ stats.nb_total }}</h3>
+            <p>Incidents signalés</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="icon bg-warning-subtle text-warning"><i class="bi bi-hourglass-split"></i></div>
+            <h3>{{ stats.nb_signale }}</h3>
+            <p>En attente de traitement</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="icon bg-success-subtle text-success"><i class="bi bi-check-circle-fill"></i></div>
+            <h3>{{ stats.nb_traite }}</h3>
+            <p>Traités</p>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="icon bg-secondary-subtle text-secondary"><i class="bi bi-gavel"></i></div>
+            <h3>{{ stats.nb_sanctions }}</h3>
+            <p>Sanctions décidées</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <h5 class="card-title"><i class="bi bi-plus-circle-fill text-primary"></i> Actions rapides</h5>
+                <div class="d-grid gap-2 mt-3">
+                    <a href="{% url 'ecoles:incident_creer' %}" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Signaler un incident
+                    </a>
+                    <a href="{% url 'ecoles:incident_liste' %}" class="btn btn-outline-primary">
+                        <i class="bi bi-list-ul"></i> Voir tous les incidents
+                    </a>
+                    <a href="{% url 'ecoles:eleve_recherche' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-person-search"></i> Historique d'un élève
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="mb-0"><i class="bi bi-clock-history text-primary"></i> Derniers incidents</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if derniers_incidents %}
+                    <ul class="list-group list-group-flush">
+                        {% for inc in derniers_incidents %}
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div>
+                                <a href="{% url 'ecoles:incident_detail' inc.id %}" class="fw-semibold text-decoration-none">
+                                    {{ inc.eleve.nom_complet }}
+                                </a>
+                                <div class="small text-muted">{{ inc.get_type_incident_display }} · {{ inc.date_incident|date:"d/m/Y" }}</div>
+                            </div>
+                            {% if inc.gravite == 'grave' %}
+                                <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle">Grave</span>
+                            {% elif inc.gravite == 'moyen' %}
+                                <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Moyen</span>
+                            {% else %}
+                                <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Léger</span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <div class="p-4 text-center text-muted">
+                        <i class="bi bi-emoji-smile fs-1"></i>
+                        <p class="mb-0 mt-2">Aucun incident signalé.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Vérification des notes — ScolaEdu_AKEK{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <a href="/dashboard/" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h4 class="mb-0"><i class="bi bi-clipboard-check text-primary"></i> Vérification des notes</h4>
+                <small class="text-muted">{{ etablissement.nom }} · Année {{ annee.libelle }}</small>
+            </div>
+        </div>
+
+        <div class="alert alert-info d-flex gap-2 small">
+            <i class="bi bi-info-circle-fill"></i>
+            <div>
+                Sélectionnez une <strong>classe</strong> et un <strong>trimestre</strong> pour voir
+                le récapitulatif complet des notes.
+            </div>
+        </div>
+
+        <form method="get">
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Classe</label>
+                        <select name="classe" class="form-select" required>
+                            <option value="">— Choisir une classe —</option>
+                            {% for c in classes %}
+                                <option value="{{ c.id }}">{{ c.nom }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Trimestre</label>
+                        <select name="trimestre" class="form-select" required>
+                            <option value="">— Choisir un trimestre —</option>
+                            {% for t in trimestres %}
+                                <option value="{{ t.id }}">{{ t.get_numero_display }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mb-5">
+                <a href="/dashboard/" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Annuler
+                </a>
+                <button type="submit" class="btn btn-primary flex-grow-1">
+                    <i class="bi bi-search"></i> Afficher la vérification
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

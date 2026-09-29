@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Historique — {{ eleve.nom_complet }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <a href="{% url 'ecoles:eleve_recherche' %}" class="btn btn-sm btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i>
+        </a>
+        <h4 class="d-inline-block mb-0">
+            <i class="bi bi-person-badge text-primary"></i>
+            Historique disciplinaire — {{ eleve.nom_complet }}
+        </h4>
+        <div class="small text-muted ms-5">Matricule {{ eleve.matricule }}</div>
+    </div>
+    <a href="{% url 'ecoles:incident_creer' %}?eleve={{ eleve.id }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Signaler un incident
+    </a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="icon bg-danger-subtle text-danger"><i class="bi bi-exclamation-triangle-fill"></i></div>
+            <h3>{{ stats.nb_incidents }}</h3>
+            <p>Incidents au total</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="icon bg-warning-subtle text-warning"><i class="bi bi-exclamation-octagon-fill"></i></div>
+            <h3>{{ stats.nb_graves }}</h3>
+            <p>Incidents graves</p>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="icon bg-secondary-subtle text-secondary"><i class="bi bi-gavel"></i></div>
+            <h3>{{ stats.nb_sanctions }}</h3>
+            <p>Sanctions décidées</p>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-header bg-white border-bottom">
+        <h5 class="mb-0"><i class="bi bi-list-ul text-primary"></i> Incidents ({{ incidents|length }})</h5>
+    </div>
+    <div class="card-body p-0">
+        {% if incidents %}
+            <ul class="list-group list-group-flush">
+                {% for inc in incidents %}
+                <li class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <a href="{% url 'ecoles:incident_detail' inc.id %}" class="fw-semibold text-decoration-none">
+                                {{ inc.get_type_incident_display }}
+                            </a>
+                            <div class="small text-muted">{{ inc.date_incident|date:"d/m/Y" }}
+                                {% if inc.signale_par %} · signalé par {{ inc.signale_par.get_full_name|default:inc.signale_par.username }}{% endif %}
+                            </div>
+                        </div>
+                        {% if inc.gravite == 'grave' %}
+                            <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle">Grave</span>
+                        {% elif inc.gravite == 'moyen' %}
+                            <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle">Moyen</span>
+                        {% else %}
+                            <span class="badge bg-success-subtle text-success-emphasis border border-success-subtle">Léger</span>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="p-4 text-center text-muted">
+                <i class="bi bi-emoji-smile fs-3"></i>
+                <p class="mb-0 mt-2 small">Aucun incident enregistré.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom">
+        <h5 class="mb-0"><i class="bi bi-gavel text-secondary"></i> Sanctions ({{ sanctions|length }})</h5>
+    </div>
+    <div class="card-body p-0">
+        {% if sanctions %}
+            <ul class="list-group list-group-flush">
+                {% for s in sanctions %}
+                <li class="list-group-item">
+                    <div class="fw-semibold">{{ s.get_type_sanction_display }}</div>
+                    <div class="small text-muted">
+                        Du {{ s.date_debut|date:"d/m/Y" }}
+                        {% if s.date_fin %} au {{ s.date_fin|date:"d/m/Y" }}{% endif %}
+                        · Décidée par {{ s.decidee_par.get_full_name|default:s.decidee_par.username|default:"—" }}
+                    </div>
+                    {% if s.description %}<div class="small">{{ s.description }}</div>{% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <div class="p-4 text-center text-muted">
+                <i class="bi bi-info-circle fs-3"></i>
+                <p class="mb-0 mt-2 small">Aucune sanction décidée.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

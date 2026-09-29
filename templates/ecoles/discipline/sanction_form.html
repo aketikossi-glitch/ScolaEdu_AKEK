@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titre }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <a href="{% url 'ecoles:incident_detail' incident.id %}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h4 class="mb-0"><i class="bi bi-gavel text-secondary"></i> {{ titre }}</h4>
+                <small class="text-muted">{{ incident.get_type_incident_display }} du {{ incident.date_incident|date:"d/m/Y" }}</small>
+            </div>
+        </div>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">{{ form.type_sanction.label }} <span class="text-danger">*</span></label>
+                        {{ form.type_sanction }}
+                        {% if form.type_sanction.errors %}<div class="text-danger small">{{ form.type_sanction.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">{{ form.date_debut.label }} <span class="text-danger">*</span></label>
+                            {{ form.date_debut }}
+                            {% if form.date_debut.errors %}<div class="text-danger small">{{ form.date_debut.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">{{ form.date_fin.label }}</label>
+                            {{ form.date_fin }}
+                            {% if form.date_fin.errors %}<div class="text-danger small">{{ form.date_fin.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold">{{ form.description.label }}</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}<div class="text-danger small">{{ form.description.errors.0 }}</div>{% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mb-5">
+                <a href="{% url 'ecoles:incident_detail' incident.id %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Annuler
+                </a>
+                <button type="submit" class="btn btn-primary flex-grow-1">
+                    <i class="bi bi-check2-circle"></i> Enregistrer la sanction
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+{% endblock %}

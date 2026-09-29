@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Bulletins — ScolaEdu{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+      <i class="bi bi-file-earmark-pdf text-danger"></i>
+      Bulletins trimestriels
+    </h2>
+    <a href="/dashboard/" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i> Retour
+    </a>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="alert alert-info">
+    <i class="bi bi-info-circle"></i>
+    <strong>{{ etablissement.nom }}</strong> — Année <strong>{{ annee.libelle }}</strong>
+    {% if est_enseignant %}
+      <span class="badge bg-warning text-dark ms-2">Mode Enseignant</span>
+    {% endif %}
+  </div>
+
+  {% if aucune_affectation %}
+    <div class="alert alert-warning">
+      <i class="bi bi-exclamation-triangle"></i>
+      {% if est_enseignant %}
+        Aucune classe ne vous est affectée cette année.
+      {% else %}
+        Aucune classe créée. Créez d'abord des classes.
+      {% endif %}
+    </div>
+  {% else %}
+
+  <div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <i class="bi bi-mortarboard"></i> Sélection classe + trimestre
+    </div>
+    <div class="card-body">
+
+      <div class="row g-3 mb-3">
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Classe</label>
+          <select name="classe" id="selectClasse" class="form-select" required>
+            <option value="">— Sélectionner une classe —</option>
+            {% for c in classes %}
+              <option value="{{ c.id }}">{{ c.nom }} — {{ c.get_niveau_display }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Trimestre</label>
+          <select name="trimestre" id="selectTrimestre" class="form-select" required>
+            <option value="">— Sélectionner un trimestre —</option>
+            {% for t in trimestres %}
+              <option value="{{ t.id }}">
+                {{ t.get_numero_display }}
+                ({{ t.date_debut|date:"d/m/Y" }} → {{ t.date_fin|date:"d/m/Y" }})
+                {% if t.cloture %} — Clôturé{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="alert alert-secondary small">
+        <i class="bi bi-lightbulb"></i>
+        <strong>Astuce :</strong> Le bouton <em>Bulletins PDF — Toute la classe</em>
+        génère UN SEUL PDF contenant tous les bulletins de la classe (idéal pour l'impression).
+      </div>
+
+      <div class="d-flex flex-wrap gap-2">
+        <button type="button" class="btn btn-danger" onclick="genererClasse()">
+          <i class="bi bi-file-earmark-pdf-fill"></i> Bulletins PDF — Toute la classe
+        </button>
+        <button type="button" class="btn btn-outline-danger" onclick="infoBulletinIndividuel()">
+          <i class="bi bi-person-badge"></i> Bulletin individuel
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  {% endif %}
+</div>
+
+<script>
+function genererClasse() {
+  const classeId = document.getElementById('selectClasse').value;
+  const trimestreId = document.getElementById('selectTrimestre').value;
+  if (!classeId || !trimestreId) {
+    alert("Sélectionne une classe ET un trimestre.");
+    return;
+  }
+  window.open('/ecole/bulletins/classe/' + classeId + '/trimestre/' + trimestreId + '/pdf/', '_blank');
+}
+
+function infoBulletinIndividuel() {
+  alert("Pour un bulletin individuel :\n\n1. Va dans Élèves\n2. Clique sur un élève\n3. Clique sur « Bulletin PDF » (à venir sur la fiche élève)\n\nOu utilise l'URL directe :\n/ecole/bulletins/eleve/ID/trimestre/ID/pdf/");
+}
+</script>
+{% endblock %}

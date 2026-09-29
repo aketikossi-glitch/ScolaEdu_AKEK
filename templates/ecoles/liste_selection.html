@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Listes de classe — ScolaEdu{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+      <i class="bi bi-list-ul text-primary"></i>
+      Listes de classe
+    </h2>
+    <a href="/dashboard/" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i> Retour
+    </a>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="alert alert-info">
+    <i class="bi bi-info-circle"></i>
+    <strong>{{ etablissement.nom }}</strong> — Année <strong>{{ annee.libelle }}</strong>
+    {% if est_enseignant %}
+      <span class="badge bg-warning text-dark ms-2">Mode Enseignant</span>
+    {% endif %}
+  </div>
+
+  {% if aucune_affectation %}
+    <div class="alert alert-warning">
+      <i class="bi bi-exclamation-triangle"></i>
+      {% if est_enseignant %}
+        Aucune classe ne vous est affectée cette année.
+      {% else %}
+        Aucune classe créée. Créez d'abord des classes.
+      {% endif %}
+    </div>
+  {% else %}
+
+    <div class="card shadow-sm">
+      <div class="card-header bg-primary text-white">
+        <i class="bi bi-mortarboard"></i> Sélection d'une classe
+      </div>
+      <div class="card-body">
+
+        <div class="row g-3 mb-3">
+          <div class="col-md-8">
+            <label class="form-label fw-bold">Classe</label>
+            <select name="classe" id="selectClasse" class="form-select" required>
+              <option value="">— Sélectionner une classe —</option>
+              {% for c in classes %}
+                <option value="{{ c.id }}">
+                  {{ c.nom }} — {{ c.get_niveau_display }}
+                  ({{ c.nb_inscrits }} élève{{ c.nb_inscrits|pluralize }})
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+
+        <div class="alert alert-secondary small">
+          <i class="bi bi-lightbulb"></i>
+          <strong>À quoi ça sert :</strong>
+          <ul class="mb-0 mt-1">
+            <li><b>Liste des élèves :</b> document officiel complet (matricule, nom, prénoms, sexe, date/lieu de naissance, âge, statut) — idéal pour les <b>convocations</b>, <b>affichages</b>, <b>vérifications d'inscriptions</b>.</li>
+            <li><b>Liste de présence :</b> feuille d'appel vierge avec 7 colonnes vides pour <b>saisir les présences en classe</b> (une colonne par jour / séance).</li>
+          </ul>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+          <button type="button" class="btn btn-primary" onclick="genererListe()">
+            <i class="bi bi-file-earmark-pdf-fill"></i> Liste des élèves (PDF)
+          </button>
+          <button type="button" class="btn btn-outline-primary" onclick="genererPresence()">
+            <i class="bi bi-calendar-check"></i> Liste de présence (PDF)
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+  {% endif %}
+
+</div>
+
+<script>
+function _getClasseId() {
+  const classeId = document.getElementById('selectClasse').value;
+  if (!classeId) {
+    alert("Sélectionne une classe.");
+    return null;
+  }
+  return classeId;
+}
+
+function genererListe() {
+  const classeId = _getClasseId();
+  if (!classeId) return;
+  window.open('/ecole/listes/classe/' + classeId + '/pdf/', '_blank');
+}
+
+function genererPresence() {
+  const classeId = _getClasseId();
+  if (!classeId) return;
+  window.open('/ecole/listes/presence/classe/' + classeId + '/pdf/', '_blank');
+}
+</script>
+{% endblock %}

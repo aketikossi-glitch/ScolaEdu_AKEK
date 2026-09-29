@@ -1,0 +1,234 @@
+{% extends 'base.html' %}
+
+{% block title %}Vérification des notes — {{ classe.nom }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .verif-table {
+        background: white;
+        border: 2px solid #1e3a8a;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .verif-table-header {
+        background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%);
+        color: white;
+        padding: 10px 15px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-weight: 600;
+    }
+    .verif-scroll {
+        overflow-x: auto;
+    }
+    .verif-table table {
+        width: 100%;
+        min-width: 1200px;
+        border-collapse: collapse;
+        font-size: 0.8rem;
+        margin: 0;
+    }
+    .verif-table thead th {
+        background: #1e40af;
+        color: white;
+        padding: 8px 6px;
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        border-right: 1px solid #3b82f6;
+        white-space: nowrap;
+    }
+    .verif-table thead th.col-num {
+        position: sticky;
+        left: 0;
+        z-index: 11;
+        background: #1e40af;
+    }
+    .verif-table tbody td {
+        padding: 5px 6px;
+        border-bottom: 1px solid #e2e8f0;
+        border-right: 1px solid #f1f5f9;
+        text-align: center;
+        height: 32px;
+    }
+    .verif-table tbody td.col-num {
+        position: sticky;
+        left: 0;
+        background: #e0e7ff;
+        color: #1e40af;
+        font-weight: 700;
+        z-index: 6;
+    }
+    .verif-table tbody tr:nth-child(even) { background: #f8fafc; }
+    .verif-table tbody tr:nth-child(even) td.col-num { background: #e0e7ff; }
+    .verif-table tbody tr:hover { background: #dbeafe; }
+    .cell-nom { text-align: left !important; font-weight: 700; padding-left: 10px !important; }
+    .note-moyf { font-weight: 700; }
+    .note-moyf.faible { color: #dc2626; }
+    .note-moyf.moyen { color: #f59e0b; }
+    .note-moyf.bon { color: #16a34a; }
+    .note-vide { color: #cbd5e1; font-style: italic; }
+    .badge-rang { background: #fbbf24; color: #1e3a8a; padding: 2px 8px; border-radius: 10px; font-weight: 700; font-size: 0.72rem; }
+    .badge-rang.gold { background: #fbbf24; color: #78350f; }
+    .badge-rang.silver { background: #e5e7eb; color: #374151; }
+    .badge-rang.bronze { background: #fed7aa; color: #7c2d12; }
+    .total-col { background: #dbeafe !important; font-weight: 700; }
+    .moy-col { background: #dcfce7 !important; font-weight: 700; color: #166534; }
+    .rang-col { background: #fef3c7 !important; }
+    .appr-col { font-weight: 700; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h4 class="mb-0"><i class="bi bi-clipboard-check"></i> Vérification des notes</h4>
+        <small class="text-muted">
+            {{ etablissement.nom }} · <strong>{{ classe.nom }}</strong> · <strong>{{ trimestre.get_numero_display }}</strong>
+            · {{ nb_eleves }} élève{{ nb_eleves|pluralize }}
+        </small>
+    </div>
+</div>
+
+<!-- Filtres -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label small fw-semibold">Classe</label>
+                <select name="classe" class="form-select">
+                    {% for c in classes %}
+                        <option value="{{ c.id }}" {% if c.id|stringformat:"s" == classe_id|stringformat:"s" %}selected{% endif %}>{{ c.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Trimestre</label>
+                <select name="trimestre" class="form-select">
+                    {% for t in trimestres %}
+                        <option value="{{ t.id }}" {% if t.id|stringformat:"s" == trimestre_id|stringformat:"s" %}selected{% endif %}>{{ t.get_numero_display }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> Afficher
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tableau -->
+<div class="verif-table">
+    <div class="verif-table-header">
+        <span><i class="bi bi-table"></i> TABLEAU DE VÉRIFICATION — {{ classe.nom }} · {{ trimestre.get_numero_display }}</span>
+        <span class="badge bg-light text-dark">{{ nb_eleves }} élève{{ nb_eleves|pluralize }}</span>
+    </div>
+
+    <div class="verif-scroll">
+        <table>
+            <thead>
+                <tr>
+                    <th class="col-num">N°</th>
+                    <th>Nom et Prénom(s)</th>
+                    {% for mc in matieres_classe %}
+                        <th>{{ mc.matiere.code }}<br><small>(Coef. {{ mc.coefficient }})</small></th>
+                    {% endfor %}
+                    <th style="background:#3b82f6;">Total</th>
+                    <th style="background:#16a34a;">Moy Trim</th>
+                    <th style="background:#f59e0b;">Rang</th>
+                    <th>Appréciation</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for d in eleves_data %}
+                <tr>
+                    <td class="col-num">{{ forloop.counter }}</td>
+                    <td class="cell-nom">{{ d.eleve.nom }} {{ d.eleve.prenom }}</td>
+                    {% for detail in d.notes_detail %}
+                        <td>
+                            {% if detail.moyf is not None %}
+                                {% if detail.moyf < 8 %}
+                                    <span class="note-moyf faible">{{ detail.moyf }}</span>
+                                {% elif detail.moyf < 12 %}
+                                    <span class="note-moyf moyen">{{ detail.moyf }}</span>
+                                {% else %}
+                                    <span class="note-moyf bon">{{ detail.moyf }}</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="note-vide">—</span>
+                            {% endif %}
+                        </td>
+                    {% endfor %}
+                    <td class="total-col">{{ d.total_points|floatformat:2 }}</td>
+                    <td class="moy-col">
+                        {% if d.moyenne_trimestre is not None %}
+                            {{ d.moyenne_trimestre|floatformat:2 }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td class="rang-col">
+                        {% if d.rang %}
+                            {% if d.rang == 1 %}
+                                <span class="badge-rang gold">1er 🥇</span>
+                            {% elif d.rang == 2 %}
+                                <span class="badge-rang silver">2ème 🥈</span>
+                            {% elif d.rang == 3 %}
+                                <span class="badge-rang bronze">3ème 🥉</span>
+                            {% else %}
+                                <span class="badge-rang">{{ d.rang }}ème</span>
+                            {% endif %}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td class="appr-col">
+                        {% if d.appreciation == 'Très bien' %}
+                            <span class="text-success">{{ d.appreciation }}</span>
+                        {% elif d.appreciation == 'Bien' %}
+                            <span class="text-success">{{ d.appreciation }}</span>
+                        {% elif d.appreciation == 'Assez bien' %}
+                            <span class="text-primary">{{ d.appreciation }}</span>
+                        {% elif d.appreciation == 'Passable' %}
+                            <span class="text-warning">{{ d.appreciation }}</span>
+                        {% elif d.appreciation == 'Faible' %}
+                            <span class="text-danger">{{ d.appreciation }}</span>
+                        {% else %}
+                            {{ d.appreciation }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" class="text-center text-muted py-5">
+                        Aucun élève dans cette classe.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="alert alert-info small mt-3 d-flex gap-2">
+    <i class="bi bi-info-circle-fill"></i>
+    <div>
+        <strong>Légende :</strong>
+        <span class="text-danger">● Faible (&lt; 8)</span> |
+        <span class="text-warning">● Moyen (8-12)</span> |
+        <span class="text-success">● Bon (≥ 12)</span>
+    </div>
+</div>
+
+<div class="d-flex gap-2 mt-4 mb-5">
+    <a href="/ecole/notes/" class="btn btn-outline-secondary">
+        <i class="bi bi-pencil-square"></i> Retour à la saisie
+    </a>
+</div>
+
+{% endblock %}

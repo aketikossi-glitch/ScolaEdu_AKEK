@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Mot de passe réinitialisé — ScolaEdu_AKEK{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+
+        <div class="text-center mb-4">
+            <div style="font-size:4rem;">🔑</div>
+            <h3 class="mt-3">Mot de passe réinitialisé</h3>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body">
+                <table class="table table-bordered mb-3">
+                    <tr>
+                        <td class="bg-light fw-semibold">Utilisateur</td>
+                        <td><code>{{ infos.username }}</code></td>
+                    </tr>
+                    <tr>
+                        <td class="bg-light fw-semibold">Nouveau mot de passe</td>
+                        <td><code class="text-danger fw-bold" style="font-size:1.05rem;">{{ infos.password }}</code></td>
+                    </tr>
+                </table>
+                <p class="text-muted small mb-0">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Communiquez ce mot de passe à l'utilisateur. Il ne sera plus affiché.
+                </p>
+            </div>
+        </div>
+
+        <a href="/principal/etablissements/{{ etablissement.id }}/" class="btn btn-primary w-100">
+            <i class="bi bi-check-circle"></i> Retour à l'établissement
+        </a>
+
+    </div>
+</div>
+
+{% endblock %}

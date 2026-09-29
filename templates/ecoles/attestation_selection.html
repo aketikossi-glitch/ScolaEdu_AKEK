@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Attestations — ScolaEdu{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">
+      <i class="bi bi-file-earmark-check text-primary"></i>
+      Attestations scolaires
+    </h2>
+    <a href="/dashboard/" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-arrow-left"></i> Retour
+    </a>
+  </div>
+
+  {% if messages %}
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="alert alert-info">
+    <i class="bi bi-info-circle"></i>
+    <strong>{{ etablissement.nom }}</strong> — Année <strong>{{ annee.libelle }}</strong>
+    · <span class="badge bg-primary">{{ total }} élève{{ total|pluralize }} inscrit{{ total|pluralize }}</span>
+  </div>
+
+  <!-- Recherche -->
+  <div class="card border-0 shadow-sm mb-3">
+    <div class="card-body py-3">
+      <form method="get" class="row g-2 align-items-end">
+        <div class="col-md-10">
+          <label class="form-label small fw-semibold">Rechercher un élève</label>
+          <input type="text" name="q" value="{{ recherche }}" class="form-control"
+                 placeholder="Nom, prénom ou matricule...">
+        </div>
+        <div class="col-md-2">
+          <button type="submit" class="btn btn-primary w-100">
+            <i class="bi bi-search"></i> Filtrer
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Types disponibles -->
+  <div class="row g-3 mb-4">
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100 border-start border-primary border-4">
+        <div class="card-body">
+          <h6 class="text-primary"><i class="bi bi-file-earmark-check"></i> Attestation d'inscription</h6>
+          <small class="text-muted">Preuve qu'un élève est inscrit pour l'année en cours.</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100 border-start border-success border-4">
+        <div class="card-body">
+          <h6 class="text-success"><i class="bi bi-mortarboard"></i> Attestation de scolarité</h6>
+          <small class="text-muted">Preuve qu'un élève fréquente l'établissement (avec classe).</small>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card border-0 shadow-sm h-100 border-start border-danger border-4">
+        <div class="card-body">
+          <h6 class="text-danger"><i class="bi bi-box-arrow-right"></i> Certificat de radiation</h6>
+          <small class="text-muted">À remettre en cas de transfert vers un autre établissement.</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Liste des élèves -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <i class="bi bi-people-fill"></i> Élèves inscrits — Cliquez pour générer
+    </div>
+    <div class="card-body p-0">
+      {% if inscriptions %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Matricule</th>
+              <th>Nom et Prénom(s)</th>
+              <th>Classe</th>
+              <th class="text-end">Générer une attestation</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for insc in inscriptions %}
+            <tr>
+              <td class="font-monospace fw-bold text-primary">{{ insc.eleve.matricule }}</td>
+              <td><strong>{{ insc.eleve.nom_complet }}</strong></td>
+              <td><span class="badge bg-info">{{ insc.classe.nom }}</span></td>
+              <td class="text-end">
+                <div class="btn-group" role="group">
+                  <a href="/ecole/attestations/eleve/{{ insc.eleve.id }}/inscription/pdf/"
+                     class="btn btn-sm btn-outline-primary" title="Attestation d'inscription">
+                    <i class="bi bi-file-earmark-check"></i> Inscription
+                  </a>
+                  <a href="/ecole/attestations/eleve/{{ insc.eleve.id }}/scolarite/pdf/"
+                     class="btn btn-sm btn-outline-success" title="Attestation de scolarité">
+                    <i class="bi bi-mortarboard"></i> Scolarité
+                  </a>
+                  <a href="/ecole/attestations/eleve/{{ insc.eleve.id }}/radiation/pdf/"
+                     class="btn btn-sm btn-outline-danger" title="Certificat de radiation"
+                     onclick="return confirm('Générer un certificat de radiation pour {{ insc.eleve.nom_complet }} ?')">
+                    <i class="bi bi-box-arrow-right"></i> Radiation
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-inbox" style="font-size:3rem;"></i>
+        <p class="mt-2">Aucun élève trouvé.</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

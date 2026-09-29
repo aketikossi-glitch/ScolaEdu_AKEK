@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titre }} — ScolaEdu_AKEK{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <a href="/ecole/classes/" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h4 class="mb-0">
+                    {% if mode == 'creer' %}
+                        <i class="bi bi-plus-circle text-primary"></i>
+                    {% else %}
+                        <i class="bi bi-pencil-square text-primary"></i>
+                    {% endif %}
+                    {{ titre }}
+                </h4>
+                <small class="text-muted">
+                    {{ etablissement.nom }} · Année {{ annee.libelle }}
+                </small>
+            </div>
+        </div>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            {{ form.nom.label }} <span class="text-danger">*</span>
+                        </label>
+                        {{ form.nom }}
+                        {% if form.nom.errors %}
+                            <div class="text-danger small">{{ form.nom.errors.0 }}</div>
+                        {% endif %}
+                        <small class="text-muted">Ex: 6ème A, 5ème B, Terminale D...</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            {{ form.niveau.label }} <span class="text-danger">*</span>
+                        </label>
+                        {{ form.niveau }}
+                        {% if form.niveau.errors %}
+                            <div class="text-danger small">{{ form.niveau.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">{{ form.effectif_max.label }}</label>
+                        {{ form.effectif_max }}
+                        {% if form.effectif_max.errors %}
+                            <div class="text-danger small">{{ form.effectif_max.errors.0 }}</div>
+                        {% endif %}
+                        <small class="text-muted">Nombre maximum d'élèves dans la classe</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mb-5">
+                <a href="/ecole/classes/" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Annuler
+                </a>
+                <button type="submit" class="btn btn-primary flex-grow-1">
+                    <i class="bi bi-check2-circle"></i>
+                    {% if mode == 'creer' %}Créer la classe{% else %}Enregistrer{% endif %}
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

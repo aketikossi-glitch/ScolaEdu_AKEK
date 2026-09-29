@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}Saisie de notes — ScolaEdu_AKEK{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <a href="/dashboard/" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h4 class="mb-0"><i class="bi bi-pencil-square text-primary"></i> Saisie de notes</h4>
+                <small class="text-muted">{{ etablissement.nom }} · Année {{ annee.libelle }}</small>
+            </div>
+        </div>
+
+        {% if aucune_affectation %}
+            <!-- Cas : aucune classe affectée -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="bi bi-inbox" style="font-size:4rem;color:#cbd5e1;"></i>
+                    <h5 class="mt-3 text-muted">
+                        {% if est_enseignant %}
+                            Aucune classe ne vous est affectée
+                        {% else %}
+                            Aucune classe disponible
+                        {% endif %}
+                    </h5>
+                    <p class="text-muted mb-4">
+                        {% if est_enseignant %}
+                            Vous n'enseignez actuellement dans aucune classe.<br>
+                            Contactez le chef d'établissement pour qu'il vous affecte des classes et matières.
+                        {% else %}
+                            Aucune classe n'est créée pour cette année scolaire.
+                        {% endif %}
+                    </p>
+                    <a href="/auth/logout/" class="btn btn-outline-secondary">
+                        <i class="bi bi-box-arrow-right"></i> Se déconnecter
+                    </a>
+                </div>
+            </div>
+        {% else %}
+
+            <div class="alert alert-info d-flex gap-2 small">
+                <i class="bi bi-info-circle-fill"></i>
+                <div>
+                    {% if est_enseignant %}
+                        Choisissez une de <strong>vos classes</strong>, puis la <strong>matière</strong> que vous y enseignez.
+                    {% else %}
+                        Choisissez une <strong>classe</strong>, une <strong>matière</strong> et un <strong>trimestre</strong>.
+                    {% endif %}
+                </div>
+            </div>
+
+            <form method="post" id="formSelection">
+                {% csrf_token %}
+
+                <div class="card border-0 shadow-sm mb-3">
+                    <div class="card-body">
+
+                        <!-- ===== CLASSE ===== -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Classe <span class="text-danger">*</span></label>
+                            <select name="classe" id="selectClasse" class="form-select" required>
+                                <option value="">— Choisir une classe —</option>
+                                {% for c in classes %}
+                                    <option value="{{ c.id }}"
+                                        {% if premiere_classe and premiere_classe.id == c.id %}selected{% endif %}>
+                                        {{ c.nom }} — {{ c.get_niveau_display }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- ===== MATIÈRE (sera rechargée dynamiquement) ===== -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Matière <span class="text-danger">*</span></label>
+                            <select name="matiere" id="selectMatiere" class="form-select" required>
+                                <option value="">— Choisir une matière —</option>
+                                {% for m in matieres_initiales %}
+                                    <option value="{{ m.id }}">{{ m.nom }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted" id="infoMatieres">
+                                La liste se met à jour selon la classe choisie.
+                            </small>
+                        </div>
+
+                        <!-- ===== TRIMESTRE ===== -->
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Trimestre <span class="text-danger">*</span></label>
+                            <select name="trimestre" id="selectTrimestre" class="form-select" required>
+                                <option value="">— Choisir un trimestre —</option>
+                                {% for t in trimestres %}
+                                    <option value="{{ t.id }}"
+                                        {% if forloop.first %}selected{% endif %}>
+                                        {{ t.get_numero_display }}
+                                        {% if t.cloture %} (Clôturé){% endif %}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mb-3">
+                    <a href="/dashboard/" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Annuler
+                    </a>
+                    <button type="submit" class="btn btn-primary flex-grow-1">
+                        <i class="bi bi-arrow-right-circle"></i> Continuer vers la saisie
+                    </button>
+                </div>
+            </form>
+
+            <!-- Raccourcis -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h6 class="text-muted mb-3">
+                        <i class="bi bi-lightning-charge-fill text-warning"></i> Accès rapide
+                    </h6>
+                    <div class="d-grid gap-2">
+                        <a href="/ecole/notes/verification/" class="btn btn-success">
+                            <i class="bi bi-clipboard-check"></i> Vérification des notes
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        {% endif %}
+    </div>
+</div>
+
+<script>
+// ✅ Recharger dynamiquement la liste des matières selon la classe
+document.addEventListener('DOMContentLoaded', function() {
+    const selectClasse = document.getElementById('selectClasse');
+    const selectMatiere = document.getElementById('selectMatiere');
+    const infoMatieres = document.getElementById('infoMatieres');
+
+    if (!selectClasse || !selectMatiere) return;
+
+    function chargerMatieres() {
+        const classeId = selectClasse.value;
+
+        if (!classeId) {
+            selectMatiere.innerHTML = '<option value="">— Choisir une classe d\'abord —</option>';
+            if (infoMatieres) infoMatieres.textContent = "Sélectionnez une classe pour voir les matières.";
+            return;
+        }
+
+        selectMatiere.innerHTML = '<option value="">Chargement...</option>';
+        selectMatiere.disabled = true;
+
+        fetch('/ecole/api/matieres/' + classeId + '/')
+            .then(r => r.json())
+            .then(data => {
+                selectMatiere.disabled = false;
+
+                if (!data.matieres || data.matieres.length === 0) {
+                    selectMatiere.innerHTML = '<option value="">— Aucune matière disponible —</option>';
+                    if (infoMatieres) {
+                        infoMatieres.textContent = "Aucune matière ne vous est affectée dans cette classe.";
+                        infoMatieres.className = "text-danger small";
+                    }
+                    return;
+                }
+
+                let html = '<option value="">— Choisir une matière —</option>';
+                data.matieres.forEach(m => {
+                    html += `<option value="${m.id}">${m.nom}</option>`;
+                });
+                selectMatiere.innerHTML = html;
+
+                if (infoMatieres) {
+                    infoMatieres.textContent = data.matieres.length + " matière(s) disponible(s) dans cette classe.";
+                    infoMatieres.className = "text-muted small";
+                }
+            })
+            .catch(err => {
+                console.error("Erreur chargement matières :", err);
+                selectMatiere.disabled = false;
+                selectMatiere.innerHTML = '<option value="">Erreur de chargement</option>';
+            });
+    }
+
+    // Recharger à chaque changement de classe
+    selectClasse.addEventListener('change', chargerMatieres);
+});
+</script>
+
+{% endblock %}

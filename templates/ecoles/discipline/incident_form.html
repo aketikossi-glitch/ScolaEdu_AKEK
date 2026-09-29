@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titre }} — {{ etablissement.nom }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-9 col-lg-7">
+
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <a href="{% url 'ecoles:discipline_menu' %}" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i>
+            </a>
+            <div>
+                <h4 class="mb-0">
+                    <i class="bi bi-exclamation-triangle-fill text-danger"></i> {{ titre }}
+                </h4>
+                <small class="text-muted">{{ etablissement.nom }}</small>
+            </div>
+        </div>
+
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-body">
+
+                    <!-- Élève concerné : 2 étapes -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Élève concerné <span class="text-danger">*</span>
+                        </label>
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">1. Choisir la classe</label>
+                                {{ form.classe }}
+                                {% if form.classe.errors %}<div class="text-danger small">{{ form.classe.errors.0 }}</div>{% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small text-muted">2. Choisir l'élève</label>
+                                {{ form.eleve }}
+                                {% if form.eleve.errors %}<div class="text-danger small">{{ form.eleve.errors.0 }}</div>{% endif %}
+                            </div>
+                        </div>
+                        <small class="text-muted d-block mt-1">
+                            <i class="bi bi-info-circle"></i>
+                            L'élève se charge après avoir choisi la classe.
+                        </small>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">{{ form.date_incident.label }} <span class="text-danger">*</span></label>
+                            {{ form.date_incident }}
+                            {% if form.date_incident.errors %}<div class="text-danger small">{{ form.date_incident.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-semibold">{{ form.heure_incident.label }}</label>
+                            {{ form.heure_incident }}
+                            {% if form.heure_incident.errors %}<div class="text-danger small">{{ form.heure_incident.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label fw-semibold">{{ form.type_incident.label }} <span class="text-danger">*</span></label>
+                            {{ form.type_incident }}
+                            {% if form.type_incident.errors %}<div class="text-danger small">{{ form.type_incident.errors.0 }}</div>{% endif %}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-semibold">{{ form.gravite.label }}</label>
+                            {{ form.gravite }}
+                            {% if form.gravite.errors %}<div class="text-danger small">{{ form.gravite.errors.0 }}</div>{% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">{{ form.description.label }}</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}<div class="text-danger small">{{ form.description.errors.0 }}</div>{% endif %}
+                    </div>
+
+                    <div class="mb-0">
+                        <label class="form-label fw-semibold">{{ form.statut.label }}</label>
+                        {{ form.statut }}
+                        {% if form.statut.errors %}<div class="text-danger small">{{ form.statut.errors.0 }}</div>{% endif %}
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mb-5">
+                <a href="{% url 'ecoles:discipline_menu' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Annuler
+                </a>
+                <button type="submit" class="btn btn-primary flex-grow-1">
+                    <i class="bi bi-check2-circle"></i>
+                    {% if mode == 'creer' %}Signaler l'incident{% else %}Enregistrer{% endif %}
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<script>
+(function() {
+    const selectClasse = document.getElementById('id_classe');
+    const selectEleve = document.getElementById('id_eleve');
+
+    if (!selectClasse || !selectEleve) return;
+
+    // Mémoriser l'élu initial (cas "modification" ou arrivée avec ?eleve=XXX)
+    const eleveInitialValue = selectEleve.value;
+
+    function chargerEleves() {
+        const classeId = selectClasse.value;
+        if (!classeId) {
+            selectEleve.innerHTML = '<option value="">— Choisir d\'abord une classe —</option>';
+            return;
+        }
+
+        selectEleve.innerHTML = '<option value="">Chargement...</option>';
+
+        fetch('/ecole/api/eleves-par-classe/' + classeId + '/')
+            .then(r => r.json())
+            .then(data => {
+                if (!data.eleves || data.eleves.length === 0) {
+                    selectEleve.innerHTML = '<option value="">— Aucun élève dans cette classe —</option>';
+                    return;
+                }
+                let html = '<option value="">— Sélectionner un élève —</option>';
+                data.eleves.forEach(e => {
+                    html += `<option value="${e.id}">${e.nom_complet} (${e.matricule})</option>`;
+                });
+                selectEleve.innerHTML = html;
+
+                // Resélectionner l'élève initial si présent dans cette classe
+                if (eleveInitialValue) {
+                    selectEleve.value = eleveInitialValue;
+                }
+            })
+            .catch(err => {
+                selectEleve.innerHTML = '<option value="">— Erreur de chargement —</option>';
+                console.error(err);
+            });
+    }
+
+    // Écouter le changement de classe
+    selectClasse.addEventListener('change', chargerEleves);
+
+    // Au chargement : si une classe est déjà sélectionnée (cas modification / ?eleve=XXX),
+    // charger immédiatement les élèves
+    if (selectClasse.value) {
+        chargerEleves();
+    } else if (eleveInitialValue) {
+        // Cas : élève passé en paramètre mais classe non initialisée → on garde l'élève visible
+        // (le champ eleve contient déjà l'option de l'élève)
+    }
+})();
+</script>
+
+{% endblock %}

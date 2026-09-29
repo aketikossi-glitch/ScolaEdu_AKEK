@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titre }} — ScolaEdu_AKEK{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+
+        <div class="card border-0 shadow-sm border-top border-warning border-3">
+            <div class="card-body p-4">
+
+                <div class="text-center mb-4">
+                    <div style="font-size:3rem;">⚠️</div>
+                    <h4 class="mt-2 text-warning">Retirer cette matière ?</h4>
+                </div>
+
+                <div class="alert alert-warning">
+                    Vous allez retirer :
+                    <ul class="mb-0 mt-2">
+                        <li>La matière <strong>{{ affectation.matiere.nom }}</strong></li>
+                        <li>De la classe <strong>{{ classe.nom }}</strong></li>
+                        <li>Coefficient : {{ affectation.coefficient }}</li>
+                    </ul>
+                </div>
+
+                <p class="text-muted small">
+                    <i class="bi bi-info-circle"></i>
+                    Aucune note n'a été saisie pour cette matière dans cette classe. Vous pouvez la retirer sans risque.
+                </p>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex gap-2">
+                        <a href="/ecole/matieres-classes/{{ classe.id }}/" class="btn btn-outline-secondary flex-grow-1">
+                            Annuler
+                        </a>
+                        <button type="submit" class="btn btn-warning flex-grow-1">
+                            <i class="bi bi-trash"></i> Retirer
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

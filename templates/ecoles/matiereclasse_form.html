@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titre }} — ScolaEdu_AKEK{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-7">
+
+        <!-- En-tête -->
+        <div class="d-flex align-items-center gap-2 mb-4">
+            <a href="/ecole/matieres-classes/{{ classe.id }}/" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Retour
+            </a>
+            <div>
+                <h4 class="mb-0"><i class="bi bi-diagram-3 text-primary"></i> {{ titre }}</h4>
+                <small class="text-muted">{{ etablissement.nom }} · {{ annee.libelle }}</small>
+            </div>
+        </div>
+
+        <!-- Info classe -->
+        <div class="alert alert-info d-flex gap-2 align-items-center">
+            <i class="bi bi-mortarboard-fill"></i>
+            <div>
+                <strong>{{ classe.nom }}</strong> — Niveau {{ classe.get_niveau_display }}
+                {% if classe.titulaire %}
+                    · Titulaire : <strong>{{ classe.titulaire.user.get_full_name }}</strong>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Formulaire -->
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+            {% endif %}
+
+            <div class="card border-0 shadow-sm mb-3">
+                <div class="card-header bg-primary text-white">
+                    <i class="bi bi-plus-circle"></i>
+                    {% if mode == 'creer' %}Affecter une matière{% else %}Modifier l'affectation{% endif %}
+                </div>
+                <div class="card-body">
+
+                    <!-- Matière -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            {{ form.matiere.label }} <span class="text-danger">*</span>
+                        </label>
+                        {{ form.matiere }}
+                        {% if form.matiere.errors %}
+                            <div class="text-danger small">{{ form.matiere.errors.0 }}</div>
+                        {% endif %}
+                        {% if mode == 'creer' %}
+                            <small class="text-muted">
+                                Seules les matières non encore affectées apparaissent ici.
+                            </small>
+                        {% endif %}
+                    </div>
+
+                    <!-- Coefficient -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">{{ form.coefficient.label }}</label>
+                        {{ form.coefficient }}
+                        {% if form.coefficient.errors %}
+                            <div class="text-danger small">{{ form.coefficient.errors.0 }}</div>
+                        {% endif %}
+                        <small class="text-muted">Coefficient de la matière pour cette classe (1 à 10).</small>
+                    </div>
+
+                    <!-- Enseignant -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">{{ form.enseignant.label }}</label>
+                        {{ form.enseignant }}
+                        {% if form.enseignant.errors %}
+                            <div class="text-danger small">{{ form.enseignant.errors.0 }}</div>
+                        {% endif %}
+
+                        <!-- ✅ ALERTE : aucun enseignant disponible -->
+                        {% if form.enseignant.field.queryset.count == 0 %}
+                            <div class="alert alert-warning mt-2 mb-0">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                <strong>Aucun enseignant disponible.</strong>
+                                <br>
+                                <small>
+                                    Il faut d'abord créer des comptes enseignants.
+                                    {% if user.profil.role == 'admin_principal' %}
+                                        <a href="/principal/etablissements/{{ etablissement.id }}/utilisateurs/ajouter/"
+                                           class="alert-link">
+                                            Créer un enseignant →
+                                        </a>
+                                    {% else %}
+                                        Contactez l'administrateur principal pour créer les comptes enseignants.
+                                    {% endif %}
+                                </small>
+                            </div>
+                        {% else %}
+                            <small class="text-muted">
+                                {{ form.enseignant.field.queryset.count }} enseignant(s) disponible(s).
+                            </small>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="d-flex gap-2 mb-5">
+                <a href="/ecole/matieres-classes/{{ classe.id }}/" class="btn btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Annuler
+                </a>
+                <button type="submit" class="btn btn-primary flex-grow-1">
+                    <i class="bi bi-check2-circle"></i>
+                    {% if mode == 'creer' %}Affecter la matière{% else %}Enregistrer les modifications{% endif %}
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+{% endblock %}

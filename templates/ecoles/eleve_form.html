@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ titre }} — ScolaEdu_AKEK{% endblock %}
+
+{% block extra_css %}
+<style>
+    .fiche-inscription { background: white; border: 2px solid #1e3a8a; border-radius: 8px; overflow: hidden; }
+    .fiche-header { background: linear-gradient(90deg, #1e3a8a 0%, #2563eb 100%); color: white; padding: 12px 20px; font-weight: 700; font-size: 1.05rem; }
+    .fiche-section { border-top: 2px solid #1e3a8a; }
+    .fiche-section-title { background: #dbeafe; color: #1e3a8a; padding: 8px 15px; font-weight: 700; font-size: 0.92rem; border-bottom: 1px solid #93c5fd; }
+    .fiche-row { display: flex; border-bottom: 1px solid #e2e8f0; min-height: 48px; align-items: stretch; flex-wrap: wrap; }
+    .fiche-row:last-child { border-bottom: none; }
+    .fiche-label { background: #f8fafc; padding: 10px 14px; font-weight: 600; font-size: 0.85rem; color: #334155; border-right: 1px solid #e2e8f0; flex-shrink: 0; display: flex; align-items: center; width: 140px; }
+    .fiche-value { padding: 6px 10px; flex-grow: 1; min-width: 180px; display: flex; align-items: center; }
+    .fiche-value input, .fiche-value select, .fiche-value textarea { border: 1px solid #cbd5e1; border-radius: 4px; padding: 6px 10px; width: 100%; font-size: 0.9rem; }
+    .fiche-value input:focus, .fiche-value select:focus { border-color: #2563eb; outline: none; box-shadow: 0 0 0 3px rgba(37,99,235,0.15); }
+
+    /* ========== CORRECTION CHAMP DATE ========== */
+    .fiche-value input[type="date"] {
+        display: block;
+        width: 100%;
+        min-height: 36px;
+        padding: 6px 10px;
+        background: white;
+        color: #1e293b;
+    }
+    .fiche-value input[type="date"]::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+        filter: invert(30%) sepia(50%) saturate(2000%) hue-rotate(210deg);
+    }
+    /* S'assurer que la valeur est toujours visible */
+    .fiche-value input[type="date"]::-webkit-datetime-edit {
+        display: inline-block;
+        color: #1e293b;
+    }
+    .fiche-value input[type="date"]::-webkit-datetime-edit-fields-wrapper {
+        color: #1e293b;
+    }
+
+    .photo-cadre { border: 2px dashed #94a3b8; border-radius: 8px; background: #f8fafc; padding: 15px; text-align: center; }
+    .photo-preview { width: 140px; height: 180px; border: 1px solid #cbd5e1; border-radius: 4px; background: white; display: flex; align-items: center; justify-content: center; overflow: hidden; margin: 0 auto 10px; }
+    .photo-preview img { width: 100%; height: 100%; object-fit: cover; }
+    .photo-preview i { font-size: 3rem; color: #cbd5e1; }
+    .photo-info { font-size: 0.75rem; color: #64748b; margin-top: 8px; }
+    .badge-required { color: #dc2626; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="d-flex align-items-center gap-2 mb-4">
+    <a href="/ecole/eleves/" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i>
+    </a>
+    <div>
+        <h4 class="mb-0"><i class="bi bi-person-vcard text-primary"></i> {{ titre }}</h4>
+        <small class="text-muted">{{ etablissement.nom }} · Année {{ annee.libelle }}</small>
+    </div>
+</div>
+
+{% if form.non_field_errors or form_inscription.non_field_errors %}
+<div class="alert alert-danger">
+    {% for error in form.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+    {% if form_inscription %}{% for error in form_inscription.non_field_errors %}<div>{{ error }}</div>{% endfor %}{% endif %}
+</div>
+{% endif %}
+
+<form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+
+    <div class="row g-3">
+        <div class="col-md-3">
+            <div class="fiche-inscription">
+                <div class="fiche-header"><i class="bi bi-camera-fill"></i> PHOTO PASSEPORT</div>
+                <div class="photo-cadre" style="border:none;border-radius:0;">
+                    <div class="photo-preview" id="photoPreview">
+                        {% if eleve and eleve.photo %}
+                            <img src="{{ eleve.photo.url }}" alt="Photo" id="imgPreview">
+                        {% else %}
+                            <i class="bi bi-person-fill" id="iconPreview"></i>
+                        {% endif %}
+                    </div>
+                    {{ form.photo }}
+                    <div class="photo-info">
+                        <i class="bi bi-info-circle"></i>
+                        Format auto : <strong>3,5 cm × 4,5 cm</strong><br>
+                        Fond blanc, photo nette
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <div class="fiche-inscription">
+                <div class="fiche-header"><i class="bi bi-person-vcard-fill"></i> FICHE D'IDENTITÉ DE L'ÉLÈVE</div>
+
+                <div class="fiche-section">
+                    <div class="fiche-section-title"><i class="bi bi-1-circle-fill"></i> IDENTITÉ DE L'ÉLÈVE</div>
+
+                    <div class="fiche-row">
+                        <div class="fiche-label">Matricule <span class="badge-required">*</span></div>
+                        <div class="fiche-value">{{ form.matricule }}</div>
+                        <div class="fiche-label">Statut</div>
+                        <div class="fiche-value">{{ form.statut }}</div>
+                    </div>
+
+                    <div class="fiche-row">
+                        <div class="fiche-label">Nom <span class="badge-required">*</span></div>
+                        <div class="fiche-value">{{ form.nom }}</div>
+                        <div class="fiche-label">Prénom(s) <span class="badge-required">*</span></div>
+                        <div class="fiche-value">{{ form.prenom }}</div>
+                    </div>
+
+                    <div class="fiche-row">
+                        <div class="fiche-label">Sexe <span class="badge-required">*</span></div>
+                        <div class="fiche-value" style="max-width:180px;">{{ form.sexe }}</div>
+                        <div class="fiche-label">Nationalité</div>
+                        <div class="fiche-value">{{ form.nationalite }}</div>
+                    </div>
+
+                    <!-- ⭐ LIGNE CORRIGÉE : DATE DE NAISSANCE -->
+                    <div class="fiche-row">
+                        <div class="fiche-label">Date de naissance <span class="badge-required">*</span></div>
+                        <div class="fiche-value">
+                            <input type="date"
+                                   name="{{ form.date_naissance.name }}"
+                                   id="{{ form.date_naissance.id_for_label }}"
+                                   class="form-control"
+                                   value="{% if form.date_naissance.value %}{{ form.date_naissance.value|date:'Y-m-d' }}{% endif %}"
+                                   required>
+                        </div>
+                        <div class="fiche-label">Lieu de naissance</div>
+                        <div class="fiche-value">{{ form.lieu_naissance }}</div>
+                    </div>
+                </div>
+                    <div class="fiche-row">
+                        <div class="fiche-label">Pref/Naiss.</div>
+                        <div class="fiche-value">{{ form.prefecture_naissance }}</div>
+                        <div class="fiche-label"></div>
+                        <div class="fiche-value"></div>
+                    </div>
+
+                <div class="fiche-section">
+                    <div class="fiche-section-title"><i class="bi bi-2-circle-fill"></i> LE PÈRE</div>
+                    <div class="fiche-row">
+                        <div class="fiche-label">Nom du père</div>
+                        <div class="fiche-value">{{ form.nom_pere }}</div>
+                        <div class="fiche-label">Téléphone</div>
+                        <div class="fiche-value">{{ form.telephone_pere }}</div>
+                    </div>
+                    <div class="fiche-row">
+                        <div class="fiche-label">Profession</div>
+                        <div class="fiche-value">{{ form.profession_pere }}</div>
+                        <div class="fiche-label">Email</div>
+                        <div class="fiche-value">{{ form.email_pere }}</div>
+                    </div>
+                    <div class="fiche-row">
+                        <div class="fiche-label">Adresse</div>
+                        <div class="fiche-value">{{ form.adresse_pere }}</div>
+                    </div>
+                </div>
+
+                <div class="fiche-section">
+                    <div class="fiche-section-title"><i class="bi bi-3-circle-fill"></i> LA MÈRE</div>
+                    <div class="fiche-row">
+                        <div class="fiche-label">Nom de la mère</div>
+                        <div class="fiche-value">{{ form.nom_mere }}</div>
+                        <div class="fiche-label">Téléphone</div>
+                        <div class="fiche-value">{{ form.telephone_mere }}</div>
+                    </div>
+                    <div class="fiche-row">
+                        <div class="fiche-label">Profession</div>
+                        <div class="fiche-value">{{ form.profession_mere }}</div>
+                        <div class="fiche-label">Email</div>
+                        <div class="fiche-value">{{ form.email_mere }}</div>
+                    </div>
+                    <div class="fiche-row">
+                        <div class="fiche-label">Adresse</div>
+                        <div class="fiche-value">{{ form.adresse_mere }}</div>
+                    </div>
+                </div>
+
+                <div class="fiche-section">
+                    <div class="fiche-section-title"><i class="bi bi-4-circle-fill"></i> LE TUTEUR (si différent)</div>
+                    <div class="fiche-row">
+                        <div class="fiche-label">Nom du tuteur</div>
+                        <div class="fiche-value">{{ form.nom_tuteur }}</div>
+                        <div class="fiche-label">Téléphone</div>
+                        <div class="fiche-value">{{ form.telephone_tuteur }}</div>
+                    </div>
+                    <div class="fiche-row">
+                        <div class="fiche-label">Profession</div>
+                        <div class="fiche-value">{{ form.profession_tuteur }}</div>
+                        <div class="fiche-label">Email</div>
+                        <div class="fiche-value">{{ form.email_tuteur }}</div>
+                    </div>
+                    <div class="fiche-row">
+                        <div class="fiche-label">Adresse</div>
+                        <div class="fiche-value">{{ form.adresse_tuteur }}</div>
+                    </div>
+                </div>
+
+                <div class="fiche-section">
+                    <div class="fiche-section-title"><i class="bi bi-5-circle-fill"></i> CONTACT PRINCIPAL</div>
+                    <div class="fiche-row">
+                        <div class="fiche-label">Adresse de l'élève</div>
+                        <div class="fiche-value">{{ form.adresse }}</div>
+                    </div>
+                </div>
+
+                {% if form_inscription %}
+                <div class="fiche-section">
+                    <div class="fiche-section-title"><i class="bi bi-6-circle-fill"></i> INSCRIPTION (Année {{ annee.libelle }})</div>
+                    <div class="fiche-row">
+                        <div class="fiche-label">Classe d'inscription</div>
+                        <div class="fiche-value">
+                            {{ form_inscription.classe }}
+                            <small class="text-muted ms-2">Optionnel — peut être affecté plus tard.</small>
+                        </div>
+                    </div>
+                    {% if form_inscription.classe.errors %}
+                    <div class="fiche-row">
+                        <div class="fiche-value"><span class="text-danger small">{{ form_inscription.classe.errors.0 }}</span></div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-4 mb-5">
+        <a href="/ecole/eleves/" class="btn btn-outline-secondary">
+            <i class="bi bi-x-circle"></i> Annuler
+        </a>
+        <button type="submit" class="btn btn-primary flex-grow-1">
+            <i class="bi bi-check2-circle"></i>
+            {% if mode == 'creer' %}Enregistrer l'élève{% else %}Enregistrer les modifications{% endif %}
+        </button>
+    </div>
+</form>
+
+<script>
+// Prévisualisation de la photo
+document.addEventListener('DOMContentLoaded', function() {
+    var inputPhoto = document.querySelector('input[type="file"]');
+    if (inputPhoto) {
+        inputPhoto.addEventListener('change', function(e) {
+            var file = e.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(event) {
+                    var preview = document.getElementById('photoPreview');
+                    preview.innerHTML = '<img src="' + event.target.result + '" style="width:100%;height:100%;object-fit:cover;">';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+});
+</script>
+
+{% endblock %}
