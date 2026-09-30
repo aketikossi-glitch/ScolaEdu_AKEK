@@ -18,20 +18,45 @@ python manage.py collectstatic --noinput
 echo ">>> Application des migrations..."
 python manage.py migrate --noinput
 
-echo ">>> Création du superutilisateur (si inexistant)..."
+echo ">>> Création du superutilisateur + profil (si inexistant)..."
 python manage.py shell << 'PYEOF'
 from django.contrib.auth.models import User
+from core.models import ProfilUtilisateur
 import os
 
 username = os.environ.get('DJANGO_SUPERUSER_USERNAME', 'admin')
 email = os.environ.get('DJANGO_SUPERUSER_EMAIL', 'admin@scolaedu.tg')
 password = os.environ.get('DJANGO_SUPERUSER_PASSWORD', '')
 
-if password and not User.objects.filter(username=username).exists():
-    User.objects.create_superuser(username=username, email=email, password=password)
-    print(f"Superutilisateur '{username}' cree")
+if not password:
+    print("Superutilisateur : mot de passe non defini (variables manquantes)")
 else:
-    print(f"Superutilisateur '{username}' deja existant ou mot de passe non defini")
+    # 1. Créer ou récupérer le User
+    user, created = User.objects.get_or_create(
+        username=username,
+        defaults={'email': email, 'is_staff': True, 'is_superuser': True}
+    )
+    if created:
+        user.set_password(password)
+        user.save()
+        print(f"Utilisateur '{username}' cree")
+
+    # 2. Créer ou mettre à jour le ProfilUtilisateur
+    profil, profil_created = ProfilUtilisateur.objects.get_or_create(
+        user=user,
+        defaults={'role': 'admin_principal'}
+    )
+    if profil_created:
+        print(f"Profil 'admin_principal' cree pour '{username}'")
+    else:
+        # S'assurer que le rôle est bien admin_principal
+        if profil.role != 'admin_principal':
+            profil.role = 'admin_principal'
+            profil.etablissement = None
+            profil.save()
+            print(f"Profil mis a jour : role = admin_principal")
+        else:
+            print(f"Profil '{username}' deja existant (admin_principal)")
 PYEOF
 
 echo "========================================"
